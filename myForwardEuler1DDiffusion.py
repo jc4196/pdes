@@ -31,16 +31,10 @@ def u_exact(x,t):
     return y
 
 
-
-
-
-
-
-
 def tridiag(a, b, c, k1=-1, k2=0, k3=1):
+    # create a tridiagonal matrix on diagonals k1, k2, k3
     return np.diag(a, k1) + np.diag(b, k2) + np.diag(c, k3)
 
-A_FE = tridiag(mx*[lmbda], [1-2*lmbda]*(mx+1), mx*[lmbda])
 
 def forward_euler_diffusion(mx, mt):
     # set up the numerical environment variables
@@ -78,13 +72,51 @@ def forward_euler_diffusion(mx, mt):
         # Update u_j
         u_j[:] = u_jp1[:]
         
-    return x, u_jp1
+    return x, u_j
 
+
+def backward_euler_diffusion(mx,mt):
+    # set up the numerical environment variables
+    x = np.linspace(0, L, mx+1)     # mesh points in space
+    t = np.linspace(0, T, mt+1)     # mesh points in time
+    deltax = x[1] - x[0]            # gridspacing in x
+    deltat = t[1] - t[0]            # gridspacing in t
+    lmbda = kappa*deltat/(deltax**2)    # mesh fourier number
+    print("deltax=",deltax)
+    print("deltat=",deltat)
+    print("lambda=",lmbda)
+    
+    A_BE = tridiag((mx-2)*[-1*lmbda], (mx-1)*[1+2*lmbda], (mx-2)*[-1*lmbda])
+    # set up the solution variables
+    u_j = np.zeros(x.size)        # u at current time step
+    u_jp1 = np.zeros(x.size)      # u at next time step    
+    
+    # Set initial condition
+    for i in range(0, mx+1):
+        u_j[i] = u_I(x[i])
+        
+    for n in range(1, mt+1):    
+        # Backward Euler timestep at inner mesh points
+        u_jp1[1:-1] = np.linalg.solve(A_BE, u_j[1:-1])
+        
+        # Boundary conditions
+        u_jp1[0] = 0; u_jp1[mx] = 0
+            
+        # Update u_j
+        u_j[:] = u_jp1[:]        
+        
+    return x, u_j
+   
 # set numerical parameters
-mx = 10     # number of gridpoints in space
+mx = 40     # number of gridpoints in space
 mt = 1000   # number of gridpoints in time   
 
-x, u_T = forward_euler_diffusion(mx, mt)
+# tridiagonal matrices
+A_FE = tridiag(mx*[lmbda], (mx+1)*[1-2*lmbda], mx*[lmbda])
+
+# result
+x, u_T = backward_euler_diffusion(mx, mt)
+
 # plot the final result and exact solution
 pl.plot(x,u_T,'ro',label='num')
 xx = np.linspace(0,L,250)
