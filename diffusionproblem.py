@@ -35,38 +35,49 @@ def BE(T, mx, mt, lmbda, u_0, lbc, rbc, f):
             
         # Update u_j
         u_j[:] = u_jp1[:]
-        u_j[1:mt] += deltat*f(n*deltat)
+        #u_j[1:mt] += deltat*f(n*deltat)
    
     return u_j
 
 class DiffusionProblem:
     def __init__(self,
-                 L = 1,
-                 ic=lambda x:np.sin(pi*x),
-                 lbc=lambda x: 0,
-                 rbc=lambda x: 0,
+                 kappa=1,
+                 L=1,
+                 ic=lambda x: np.sin(pi*x),
+                 lbc=lambda t: 0,
+                 rbc=lambda t: 0,
                  f=lambda x: 0,
                  solver=BE):
-        self.L = L
-        self.ic = ic
-        self.lbc = lbc
-        self.rbc = rbc
-        self.f = f
-        self.solver = solver
+        self.kappa = kappa   # Diffusion constant
+        self.L = L           # Length of interval
+        self.ic = ic         # Initial condition u(x,0)
+        self.lbc = lbc       # Left boundary condition u(0,t)
+        self.rbc = rbc       # Right boundary condition u(L,t)
+        self.f = f           # Forcing function f
+        self.solver = solver # Solving function (forward/backward euler..)
         
-    def solve_to(self, T, mx=30, mt=1000):
+    def solve_to(self, T, mx=20, mt=1000):
         x = np.linspace(0, self.L, mx+1)     # mesh points in space
         t = np.linspace(0, T, mt+1)     # mesh points in time
         deltax = x[1] - x[0]            # gridspacing in x
         deltat = t[1] - t[0]            # gridspacing in t
-        lmbda = kappa*deltat/(deltax**2)    # mesh fourier number
+        lmbda = self.kappa*deltat/(deltax**2)    # mesh fourier number
     
         print("deltax =",deltax)
         print("deltat =",deltat)
         print("lambda =",lmbda)
     
-        u_0 = self.ic(x)
+        if isinstance(self.ic, (int, float)):
+            u_0 = np.full(x.size, self.ic)
+        else:
+            u_0 = self.ic(x)
+
+        print(u_0)    
         u_T = self.solver(T, mx, mt, lmbda, u_0,
                           self.lbc, self.rbc, self.f)
         pl.plot(x, u_T)
+        pl.show()
         return x, u_T
+
+dp = DiffusionProblem(ic=0)
+dp.solve_to(0.3)
