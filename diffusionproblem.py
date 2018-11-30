@@ -9,9 +9,6 @@ import numpy as np
 import matplotlib.pylab as pl
 from math import pi
 
-
-default_ic = lambda x: np.sin(pi*x)
-
 def tridiag(a, b, c, k1=-1, k2=0, k3=1):
     # create a tridiagonal matrix on diagonals k1, k2, k3
     return np.diag(a, k1) + np.diag(b, k2) + np.diag(c, k3)
@@ -24,7 +21,7 @@ def BE(T, mx, mt, lmbda, u_0, lbc, rbc, f):
     A_BE[0,0] = A_BE[mx,mx] = 1
     A_BE[0,1] = A_BE[mx,mx-1] = 0
 
-    delta_t = T / (mt+1)
+    deltat = T / (mt+1)
     
     u_jp1 = np.zeros(u_0.size)      # u at next time step 
     u_j = u_0    # u at the current time step
@@ -34,26 +31,28 @@ def BE(T, mx, mt, lmbda, u_0, lbc, rbc, f):
         u_jp1 = np.linalg.solve(A_BE, u_j)
 
         # Boundary conditions
-        u_jp1[0] = lbc(n); u_jp1[mx] = rbc(n) 
+        u_jp1[0] = lbc(n*deltat); u_jp1[mx] = rbc(n*deltat) 
             
         # Update u_j
         u_j[:] = u_jp1[:]
-        u_j[1:mt] += delta_t*f(n)
+        u_j[1:mt] += deltat*f(n*deltat)
    
     return u_j
 
 class DiffusionProblem:
     def __init__(self,
                  L = 1,
-                 ic=default_ic,
+                 ic=lambda x:np.sin(pi*x),
                  lbc=lambda x: 0,
                  rbc=lambda x: 0,
-                 f=lambda x: 0):
+                 f=lambda x: 0,
+                 solver=BE):
         self.L = L
         self.ic = ic
         self.lbc = lbc
         self.rbc = rbc
         self.f = f
+        self.solver = solver
         
     def solve_to(self, T, mx=30, mt=1000):
         x = np.linspace(0, self.L, mx+1)     # mesh points in space
@@ -67,6 +66,7 @@ class DiffusionProblem:
         print("lambda =",lmbda)
     
         u_0 = self.ic(x)
-        u_T = BE(T, mx, mt, lmbda, u_0, self.lbc, self.rbc, self.f)
+        u_T = self.solver(T, mx, mt, lmbda, u_0,
+                          self.lbc, self.rbc, self.f)
         pl.plot(x, u_T)
         return x, u_T
