@@ -33,7 +33,7 @@ def backwardeuler(T, mx, mt, lmbda, u_0, lbc, rbc, f):
             
         # Update u_j
         u_j[:] = u_jp1[:]
-        u_j[1:mt] += deltat*f(n*deltat)
+        #u_j[1:mt] += deltat*f(n*deltat)
    
     return u_j
 
