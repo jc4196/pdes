@@ -62,7 +62,8 @@ class DiffusionProblem:
         self.rbc = rbc       # Right boundary condition u(L,t)
         self.source = source # Source function
  
-    def pprint(self):
+    def pprint(self, title=''):
+        print(title)
         u = sp.Function('u')
         x, t = sp.symbols('x t')
         display(sp.Eq(u(x,t).diff(t), kappa*u(x,t).diff(x,2)))
@@ -97,11 +98,10 @@ class DiffusionProblem:
             uTsym = u_exact.subs({kappa: self.kappa,
                                   L: self.L,
                                   t: T})
-            display(uTsym)
             u = sp.lambdify(x, uTsym)
-            pl.plot(xs, u(xs),'b-',label='exact')
+            pl.plot(xs, u(xs),'b-',label=r'${}$'.format(sp.latex(uTsym)))
         pl.xlabel('x')
         pl.ylabel('u(x,{})'.format(T))
         pl.title(title)
-        pl.legend(loc='upper right')
+        pl.legend(loc='best')
         pl.show()
