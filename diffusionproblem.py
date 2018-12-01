@@ -6,33 +6,75 @@ Created on Fri Nov 30 11:55:01 2018
 """
 
 import numpy as np
+import sympy as sp
+from sympy.abc import kappa, L, x, t
+
+from IPython.display import display
 import matplotlib.pylab as pl
-from math import pi
 
 from finitedifference import backwardeuler, forwardeuler, cranknicholson
+
+
+class IC:
+    def __init__(self, expr):
+        self.u = sp.Function('u')
+        self.expr = expr
+    
+    def lambdify(self):
+        return(sp.lambdify(x, self.expr, 'numpy'))
+        
+    def pprint(self):
+        display(sp.Eq(self.u(x, 0), self.expr))
+
+class Dirichlet:
+    def __init__(self, xb, expr):
+        self.xb = xb
+        self.u = sp.Function('u')
+        self.expr = expr
+    
+    def lambdify(self):
+        return sp.lambdify(t, self.expr, 'numpy')
+    
+    def pprint(self):
+        display(sp.Eq(self.u(self.xb, t), self.expr))
+        
+
+#t = sp.symbols('t')
+#d = Dirichlet(0, sp.sin(t))
+#d.pprint()
+
+
+default_ic = IC(sp.sin(sp.pi*x))
 
 class DiffusionProblem:
     def __init__(self,
                  kappa=1,
                  L=1,
-                 ic=lambda x: np.sin(pi*x),
-                 lbc=lambda t: 0,
-                 rbc=lambda t: 0,
-                 f=lambda x, t: 0,
+                 ic=default_ic,
+                 lbc=Dirichlet(0, 0),
+                 rbc=Dirichlet(1, 0),
+                 source=lambda x, t: 0,
                  fd=backwardeuler):
         self.kappa = kappa   # Diffusion constant
         self.L = L           # Length of interval
         self.ic = ic         # Initial condition u(x,0)
         self.lbc = lbc       # Left boundary condition u(0,t)
         self.rbc = rbc       # Right boundary condition u(L,t)
-        self.f = f           # Forcing function f
-        self.fd = fd         # Finite Difference method (forward/backward euler..)
-        
-    def solve_to(self, T, mx, mt, full_output=False):
-        x = np.linspace(0, self.L, mx+1)     # mesh points in space
-        t = np.linspace(0, T, mt+1)     # mesh points in time
-        deltax = x[1] - x[0]            # gridspacing in x
-        deltat = t[1] - t[0]            # gridspacing in t
+        self.source = source # Source function
+ 
+    def pprint(self):
+        u = sp.Function('u')
+        x, t = sp.symbols('x t')
+        display(sp.Eq(u(x,t).diff(t), kappa*u(x,t).diff(x,2)))
+        self.lbc.pprint()
+        self.rbc.pprint()
+        self.ic.pprint()
+    
+    def solve_to(self, T, mx, mt, scheme=backwardeuler, full_output=False):
+        xs = np.linspace(0, self.L, mx+1)     # mesh points in space
+        ts = np.linspace(0, T, mt+1)     # mesh points in time
+        deltax = xs[1] - xs[0]            # gridspacing in x
+        deltat = ts[1] - ts[0]            # gridspacing in t
         lmbda = self.kappa*deltat/(deltax**2)    # mesh fourier number
     
         if full_output:
@@ -40,22 +82,24 @@ class DiffusionProblem:
             print("deltat =",deltat)
             print("lambda =",lmbda)
     
-        if isinstance(self.ic, (int, float)):
-            u0 = np.full(x.size, self.ic, dtype=np.float64)
-        else:
-            u0 = self.ic(x)
-  
-        uT = self.fd(T, mx, mt, lmbda, u0,
-                     self.lbc, self.rbc, self.f)
-        return x, uT
+        u0 = self.ic.lambdify()(xs)
+
+        uT = scheme(T, mx, mt, lmbda, u0,
+                    self.lbc.lambdify(), self.rbc.lambdify(), self.source)
+        return xs, uT
 
     def plot_at_T(self, T, mx=20, mt=1000, u_exact=None, title=''):
-        x, uT = self.solve_to(T,mx,mt)
-        pl.plot(x,uT,'ro',label='num')
+        xs, uT = self.solve_to(T,mx,mt)
+        pl.plot(xs,uT,'ro',label='num')
         
         if u_exact:
-            x = np.linspace(0, self.L, 250)
-            pl.plot(x,u_exact(x,T),'b-',label='exact')
+            xs = np.linspace(0, self.L, 250)
+            uTsym = u_exact.subs({kappa: self.kappa,
+                                  L: self.L,
+                                  t: T})
+            display(uTsym)
+            u = sp.lambdify(x, uTsym)
+            pl.plot(xs, u(xs),'b-',label='exact')
         pl.xlabel('x')
         pl.ylabel('u(x,{})'.format(T))
         pl.title(title)
