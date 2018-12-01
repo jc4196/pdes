@@ -21,10 +21,11 @@ class IC:
         self.expr = expr
     
     def lambdify(self):
-        return(sp.lambdify(x, self.expr, 'numpy'))
+        return sp.lambdify(x, self.expr, 'numpy')
         
     def pprint(self):
         display(sp.Eq(self.u(x, 0), self.expr))
+
 
 class Dirichlet:
     def __init__(self, xb, expr):
@@ -38,10 +39,44 @@ class Dirichlet:
     def pprint(self):
         display(sp.Eq(self.u(self.xb, t), self.expr))
         
+class Neumann:
+    def __init__(self, xb, expr):
+        self.xb = xb
+        self.u = sp.Function('u')
+        self.expr = expr
+    
+    def lambdify(self):
+        return sp.lambdify(t, self.expr, 'numpy')
 
-#t = sp.symbols('t')
-#d = Dirichlet(0, sp.sin(t))
-#d.pprint()
+    def pprint(self):
+        display(sp.Eq(self.u(self.xb, t).diff(x), self.expr))    
+
+class BC:
+    def __init__(self, xb, params, side):
+        self.u = sp.Function('u')
+        self.xb = xb
+        self.alpha, self.beta, self.rhs = params
+        self.side = side
+        
+    def lambdify(self):
+        return sp.lambdify(t, self.rhs, 'numpy')
+    
+    def pprint(self):
+        display(sp.Eq(self.alpha*self.u(x, t).subs(x,self.xb) + \
+                      self.beta*self.u(x, t).diff(x).subs(x,self.xb),
+                      self.rhs))
+        
+    def matrix_row(self, deltax, mx):
+        boundary_row = np.zeros(mx+1)     
+        if self.side == 'left':
+            boundary_row[0] = self.beta*deltax - self.alpha
+            boundary_row[1] = -self.alpha
+        elif self.side == 'right':
+            boundary_row[-2] = -self.alpha
+            boundary_row[-1] = self.alpha + self.beta*deltax
+        
+        return boundary_row
+
 
 
 default_ic = IC(sp.sin(sp.pi*x))
@@ -84,9 +119,10 @@ class DiffusionProblem:
             print("lambda =",lmbda)
     
         u0 = self.ic.lambdify()(xs)
-
+        
         uT = scheme(T, mx, mt, lmbda, u0,
                     self.lbc.lambdify(), self.rbc.lambdify(), self.source)
+        
         return xs, uT
 
     def plot_at_T(self, T, mx=20, mt=1000, u_exact=None, title=''):
