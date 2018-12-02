@@ -20,88 +20,74 @@ class IC:
         self.u = sp.Function('u')
         self.expr = expr
     
-    def lambdify(self):
-        return sp.lambdify(x, self.expr, 'numpy')
+    def get_initial_state(self, xs):
+        return sp.lambdify(x, self.expr, 'numpy')(xs)
         
     def pprint(self):
         display(sp.Eq(self.u(x, 0), self.expr))
 
-
-class Dirichlet:
-    def __init__(self, xb, expr):
-        self.xb = xb
-        self.u = sp.Function('u')
+class Source:
+    def __init__(self, expr):
         self.expr = expr
+        self.source_fn = sp.lambdify(x, self.expr, 'numpy')
     
-    def lambdify(self):
-        return sp.lambdify(t, self.expr, 'numpy')
+    def apply(self, xs):
+        return self.source_fn(xs)
     
-    def pprint(self):
-        display(sp.Eq(self.u(self.xb, t), self.expr))
+    def get_expr(self):
+        return self.expr
         
-class Neumann:
-    def __init__(self, xb, expr):
-        self.xb = xb
-        self.u = sp.Function('u')
-        self.expr = expr
-    
-    def lambdify(self):
-        return sp.lambdify(t, self.expr, 'numpy')
-
-    def pprint(self):
-        display(sp.Eq(self.u(self.xb, t).diff(x), self.expr))    
 
 class BC:
-    def __init__(self, xb, params, side):
+    def __init__(self, xb, params):
         self.u = sp.Function('u')
         self.xb = xb
         self.alpha, self.beta, self.rhs = params
-        self.side = side
-        
-    def lambdify(self):
-        return sp.lambdify(t, self.rhs, 'numpy')
+        self.rhs_fn = sp.lambdify(t, self.rhs, 'numpy')
     
     def pprint(self):
         display(sp.Eq(self.alpha*self.u(x, t).subs(x,self.xb) + \
                       self.beta*self.u(x, t).diff(x).subs(x,self.xb),
                       self.rhs))
         
-    def matrix_row(self, deltax, mx):
-        boundary_row = np.zeros(mx+1)     
-        if self.side == 'left':
-            boundary_row[0] = self.beta*deltax - self.alpha
-            boundary_row[1] = -self.alpha
-        elif self.side == 'right':
-            boundary_row[-2] = -self.alpha
-            boundary_row[-1] = self.alpha + self.beta*deltax
+    def apply_rhs(self, t_step):
+        return self.rhs_fn(t_step)
+    
+    def get_params(self):
+        return self.alpha, self.beta
+    
+class Dirichlet(BC):
+    def __init__(self, xb, rhs):
+        BC.__init__(self, xb, (1, 0, rhs))
+
+class Neumann(BC):
+    def __init__(self, xb, rhs):
+        BC.__init__(self, xb, (0, 1, rhs))
         
-        return boundary_row
 
-
-
-default_ic = IC(sp.sin(sp.pi*x))
 
 class DiffusionProblem:
     def __init__(self,
                  kappa=1,
                  L=1,
-                 ic=default_ic,
-                 lbc=Dirichlet(0, 0),
+                 ic=sp.sin(sp.pi*x),
+                 lbc=Dirichlet(0,0),
                  rbc=Dirichlet(1, 0),
-                 source=lambda x, t: 0,
+                 source=0,
                  fd=backwardeuler):
         self.kappa = kappa   # Diffusion constant
         self.L = L           # Length of interval
-        self.ic = ic         # Initial condition u(x,0)
+        self.ic = IC(ic)     # Initial condition u(x,0)
         self.lbc = lbc       # Left boundary condition u(0,t)
         self.rbc = rbc       # Right boundary condition u(L,t)
-        self.source = source # Source function
+        self.source = Source(source)  # Source function
  
     def pprint(self, title=''):
         print(title)
         u = sp.Function('u')
         x, t = sp.symbols('x t')
-        display(sp.Eq(u(x,t).diff(t), kappa*u(x,t).diff(x,2)))
+        display(sp.Eq(u(x,t).diff(t),
+                      kappa*u(x,t).diff(x,2) + self.source.get_expr()))
         self.lbc.pprint()
         self.rbc.pprint()
         self.ic.pprint()
@@ -118,16 +104,16 @@ class DiffusionProblem:
             print("deltat =",deltat)
             print("lambda =",lmbda)
     
-        u0 = self.ic.lambdify()(xs)
+        u0 = self.ic.get_initial_state(xs)
         
-        uT = scheme(T, mx, mt, lmbda, u0,
-                    self.lbc.lambdify(), self.rbc.lambdify(), self.source)
+        uT = scheme(T, self.L, mx, mt, lmbda, u0,
+                    self.lbc, self.rbc, self.source)
         
         return xs, uT
 
     def plot_at_T(self, T, mx=20, mt=1000, u_exact=None, title=''):
         xs, uT = self.solve_to(T,mx,mt)
-        pl.plot(xs,uT,'ro',label='num')
+        pl.plot(xs,uT,'ro',label='numerical')
         
         if u_exact:
             xs = np.linspace(0, self.L, 250)

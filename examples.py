@@ -12,13 +12,6 @@ init_printing()
 
 def example1():
     # Example 1 (These options are the defaults)
-    # 
-    # BCs
-    # u(0,t) = 0
-    # u(1.t) = 0
-    #
-    # IC
-    # u(x,0) = sin(pi*x)
     
     dp1 = DiffusionProblem()
     dp1.pprint('Diffusion Example 1')
@@ -30,7 +23,7 @@ def example1():
 def example2():
     # Example 2 (another frequency)
       
-    dp2 = DiffusionProblem(ic=IC(sin(pi*x) + 0.5*sin(3*pi*x)))
+    dp2 = DiffusionProblem(ic=sin(pi*x) + 0.5*sin(3*pi*x))
     dp2.pprint('Diffusion Example 2')
     
     # exact solution
@@ -49,22 +42,38 @@ def example3():
 def example4():
     # Example 4 (Initial condition)
     
-    dp4 = DiffusionProblem(ic=IC(x))
+    dp4 = DiffusionProblem(ic=x)
     dp4.pprint('Diffusion Problem 4')
     
-    u = (2/pi)*exp(-pi**2*t)*sin(pi*x)
-    dp4.plot_at_T(0.01, u_exact=u)
+    u_first = (2/pi)*exp(-pi**2*t)*sin(pi*x)
+    dp4.plot_at_T(0.3, u_exact=u_first, title='Example 4')
 
 def example5():
     # Example 5 (Neumann boundary condition)
 
     #dp5 = DiffusionProblem(rbc=Neumann(1, 0))
     #dp5.pprint() 
-    bc = BC(0,(0,1,sin(x)),'left')
-    bc.pprint()
+
+    dp5 = DiffusionProblem(lbc=Neumann(0,0), rbc=Neumann(1,0), ic=x)
+    dp5.pprint('Diffusion Problem 5')
+     
+    u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
+    dp5.plot_at_T(0.005, u_exact=u_first, title='Example 5')
+    
+def example6():
+    # Example 6 (source term)
+    
+    dp6 = DiffusionProblem(source=sin(3*pi*x), ic=sin(pi*x))
+    dp6.pprint('Diffusion Problem 6')
+    
+    u = exp(-(pi**2)*t)*sin(pi*x) + \
+            (1/(3*pi**2))*(1 - exp(-9*pi**2*t))*sin(3*pi*x)
+    dp6.plot_at_T(0.4, u_exact = u)
+    
     
 #example1()
 #example2()
 #example3()
 #example4()
-example5()
+#example5()
+example6()
