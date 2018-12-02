@@ -15,8 +15,9 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
     # Construct the backward Euler matrix
     A_BE = tridiag((mx)*[-lmbda], (mx+1)*[1+2*lmbda], (mx)*[-lmbda])
     
+    deltax = L / mx; deltat = T / mt
+    
     # Add the boundary conditions
-    deltax = L / (mx+1)
     alpha1, beta1 = lbc.get_params()
     alpha2, beta2 = rbc.get_params()
     
@@ -27,20 +28,21 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
     
     u_jp1 = np.zeros(u0.size)      # u at next time step 
     u_j = u0.copy()
-    
-    deltat = T / (mt+1)
+
     # Solve the PDE: loop over all time points
-    for n in range(1, mt+1):    
+    for n in range(1, mt+1):  
+        # Boundary conditions and source term
+        u_j[0] = deltax*lbc.apply_rhs(n*deltat) 
+        if n != 1:
+            u_j[1:mx] += deltat*source.apply(deltax*np.arange(1,mx))
+        u_j[mx] = deltax*rbc.apply_rhs(n*deltat)
+        
         # Backward Euler timestep at inner mesh points
         u_jp1 = np.linalg.solve(A_BE, u_j)
-
-        # Boundary conditions
-        u_jp1[0] = deltat*lbc.apply_rhs(n*deltat) 
-        u_jp1[mx] = deltat*rbc.apply_rhs(n*deltat) 
-            
+ 
         # Update u_j
         u_j[:] = u_jp1[:]
-        u_j[1:mt] += deltat*source.apply(u_j[1:mt])
+        
    
     return u_j
 

@@ -19,9 +19,11 @@ class IC:
     def __init__(self, expr):
         self.u = sp.Function('u')
         self.expr = expr
+        self.ic_fn = np.vectorize(sp.lambdify(x, self.expr, 'numpy'),
+                                  otypes=[np.float32])
     
     def get_initial_state(self, xs):
-        return sp.lambdify(x, self.expr, 'numpy')(xs)
+        return self.ic_fn(xs)
         
     def pprint(self):
         display(sp.Eq(self.u(x, 0), self.expr))
@@ -29,7 +31,8 @@ class IC:
 class Source:
     def __init__(self, expr):
         self.expr = expr
-        self.source_fn = sp.lambdify(x, self.expr, 'numpy')
+        self.source_fn = np.vectorize(sp.lambdify(x, self.expr, 'numpy'),
+                                      otypes=[np.float32])
     
     def apply(self, xs):
         return self.source_fn(xs)
@@ -43,7 +46,8 @@ class BC:
         self.u = sp.Function('u')
         self.xb = xb
         self.alpha, self.beta, self.rhs = params
-        self.rhs_fn = sp.lambdify(t, self.rhs, 'numpy')
+        self.rhs_fn = np.vectorize(sp.lambdify(t, self.rhs, 'numpy'),
+                                   otypes=[np.float32])
     
     def pprint(self):
         display(sp.Eq(self.alpha*self.u(x, t).subs(x,self.xb) + \

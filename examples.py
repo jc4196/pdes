@@ -46,7 +46,7 @@ def example4():
     dp4.pprint('Diffusion Problem 4')
     
     u_first = (2/pi)*exp(-pi**2*t)*sin(pi*x)
-    dp4.plot_at_T(0.3, u_exact=u_first, title='Example 4')
+    dp4.plot_at_T(0.5, u_exact=u_first, title='Example 4')
 
 def example5():
     # Example 5 (Neumann boundary condition)
@@ -59,21 +59,31 @@ def example5():
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
     dp5.plot_at_T(0.005, u_exact=u_first, title='Example 5')
-    
+
 def example6():
-    # Example 6 (source term)
-    
-    dp6 = DiffusionProblem(source=sin(3*pi*x), ic=sin(pi*x))
+    # Example 6 (constant source)
+    dp6 = DiffusionProblem(source=1, rbc=Dirichlet(1,1), ic=0)
     dp6.pprint('Diffusion Problem 6')
     
+    # steady state
+    ss = -0.5*x**2 + 1.5*x
+    dp6.plot_at_T(0.5, u_exact=ss)
+    
+def example7():
+    # Example 6 (variable source term)
+    
+    dp7 = DiffusionProblem(source=sin(3*pi*x), ic=sin(pi*x))
+    dp7.pprint('Diffusion Problem 7')
+    
     u = exp(-(pi**2)*t)*sin(pi*x) + \
-            (1/(3*pi**2))*(1 - exp(-9*pi**2*t))*sin(3*pi*x)
-    dp6.plot_at_T(0.4, u_exact = u)
+            (1/(3*pi)**2)*(1 - exp(-9*pi**2*t))*sin(3*pi*x)
+            
+    dp7.plot_at_T(0.5, u_exact = u)
     
-    
-#example1()
-#example2()
-#example3()
-#example4()
-#example5()
+example1()    
+example2()
+example3()
+example4()
+example5()
 example6()
+example7()
