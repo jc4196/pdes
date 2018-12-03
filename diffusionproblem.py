@@ -31,8 +31,7 @@ class IC:
 class Source:
     def __init__(self, expr):
         self.expr = expr
-        self.source_fn = np.vectorize(sp.lambdify(x, self.expr, 'numpy'),
-                                      otypes=[np.float32])
+        self.source_fn = sp.lambdify(x, self.expr, 'numpy')
     
     def apply(self, xs):
         return self.source_fn(xs)
@@ -42,12 +41,15 @@ class Source:
         
 
 class BC:
+    """General boundary condition for the diffusion problem of the form
+    
+    alpha*u(xb,t) + beta*du(xb,t)/dx = g(t)
+    """
     def __init__(self, xb, params):
         self.u = sp.Function('u')
         self.xb = xb
         self.alpha, self.beta, self.rhs = params
-        self.rhs_fn = np.vectorize(sp.lambdify(t, self.rhs, 'numpy'),
-                                   otypes=[np.float32])
+        self.rhs_fn = sp.lambdify(t, self.rhs, 'numpy')
     
     def pprint(self):
         display(sp.Eq(self.alpha*self.u(x, t).subs(x,self.xb) + \
@@ -128,40 +130,58 @@ class DiffusionProblem:
                     self.lbc, self.rbc, self.source)
         
         return xs, uT
-    
-    def error_at_T(self, T, mx, mt, u_exact):
-        xs, uT = self.solve_to(T, mx, mt, backwardeuler)
-        
-        uTsym = u_exact.subs({kappa: self.kappa,
-                                  L: self.L,
-                                  t: T})
-        u = sp.lambdify(x, uTsym)
-        print(u(xs), uT)
-        error = np.linalg.norm(abs(u(xs) - uT))
-        return error
         
     def solve_diffusion_problem(self, t_range, mx, mt, scheme):
         """Solve the diffusion problem for a range of times"""
         pass
         
     
-    def plot_at_T(self, T, mx=10, mt=100, u_exact=None, title=''):
-        """Plot the solution to the diffusion problem at time T"""
-        xs, uT = self.solve_to(T, mx, mt, backwardeuler)
+    def plot_at_T(self,
+                  T,
+                  mx=20,
+                  mt=1000,
+                  scheme=backwardeuler,
+                  u_exact=None,
+                  title=''):
+        """Plot the solution to the diffusion problem at time T.
+        If the exact solution is known, plot that too and return the 
+        error at time T."""
+        xs, uT = self.solve_to(T, mx, mt, scheme)
         try:
             pl.plot(xs,uT,'ro',label='numerical')
         except:
-            print('No solution found')
+            pass
             
         if u_exact:
-            xs = np.linspace(0, self.L, 250)
+            xx = np.linspace(0, self.L, 250)
             uTsym = u_exact.subs({kappa: self.kappa,
                                   L: self.L,
                                   t: T})
             u = sp.lambdify(x, uTsym)
-            pl.plot(xs, u(xs),'b-',label=r'${}$'.format(sp.latex(uTsym)))
+            pl.plot(xx, u(xx),'b-',label=r'${}$'.format(sp.latex(uTsym)))
+            error = np.linalg.norm(abs(u(xs) - uT))
+
         pl.xlabel('x')
         pl.ylabel('u(x,{})'.format(T))
         pl.title(title)
         pl.legend(loc='best')
         pl.show()
+        if u_exact:
+            return error
+    
+    def animate(self, t_range, mx, mt):
+        """Animate the solution of the diffusion problem at the given
+        time frames"""
+        pass
+    
+    def error_at_T(self, T, mx, mt, u_exact, scheme=backwardeuler):
+        """Return the error (L2 norm) between the solution of the 
+        equation at T and the exact solution"""
+        xs, uT = self.solve_to(T, mx, mt, scheme)
+        
+        uTsym = u_exact.subs({kappa: self.kappa,
+                                  L: self.L,
+                                  t: T})
+        u = sp.lambdify(x, uTsym)
+        error = np.linalg.norm(abs(u(xs) - uT))
+        return error

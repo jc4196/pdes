@@ -18,9 +18,8 @@ def example1():
     
     # exact solution
     u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L)
-    #dp1.plot_at_T(0.1, u_exact=u, title='Example 1')
-    err = dp1.error_at_T(0.02, 20, 1000, u)
-    print(err)
+    err = dp1.plot_at_T(0.1, u_exact=u, title='Example 1')
+    print('error = {:.3f}'.format(err))
     
 def example2():
     # Example 2 (another frequency)
@@ -83,9 +82,9 @@ def example7():
     dp7.plot_at_T(0.5, u_exact = u)
     
 example1()    
-#example2()
-#example3()
-#example4()
-#example5()
-#example6()
-#example7()
+example2()
+example3()
+example4()
+example5()
+example6()
+example7()
