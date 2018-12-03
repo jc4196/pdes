@@ -96,7 +96,7 @@ class DiffusionProblem:
         self.rbc.pprint()
         self.ic.pprint()
     
-    def solve_to(self, T, mx, mt, scheme=backwardeuler, full_output=False):
+    def solve_to(self, T, mx, mt, scheme=cranknicholson, full_output=False):
         xs = np.linspace(0, self.L, mx+1)     # mesh points in space
         ts = np.linspace(0, T, mt+1)     # mesh points in time
         deltax = xs[1] - xs[0]            # gridspacing in x
