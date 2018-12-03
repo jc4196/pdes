@@ -59,7 +59,7 @@ def example5():
     dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
-    dp5.plot_at_T(0.001, u_exact=u_first, title='Example 5')
+    dp5.plot_at_T(0.5, u_exact=u_first, title='Example 5')
 
 def example6():
     # Example 6 (constant source)
@@ -81,10 +81,10 @@ def example7():
             
     dp7.plot_at_T(0.5, u_exact = u)
     
-example1()    
-example2()
-example3()
-example4()
+#example1()    
+#example2()
+#example3()
+#example4()
 example5()
-example6()
-example7()
+#example6()
+#example7()
