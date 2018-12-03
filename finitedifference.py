@@ -68,7 +68,7 @@ def forwardeuler(T, mx, mt, lmbda, u_0, lbc, rbc, source):
     
     return u_j
 
-def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, f):
+def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
     # Construct the Crank-Nicholson matrices
     A_CN = tridiag(mx*[-0.5*lmbda], (mx+1)*[1+lmbda], mx*[-0.5*lmbda])
     B_CN = tridiag(mx*[0.5*lmbda], (mx+1)*[1-lmbda], mx*[0.5*lmbda])
@@ -94,8 +94,8 @@ def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, f):
         b = B_CN.dot(u_j)
         # Add boundary conditions and source to vector b
         b[0] = deltax*lbc.apply_rhs(n*deltat) 
-        #if n != 1:
-        #    u_j[1:mx] += deltat*source.apply(deltax*np.arange(1,mx))
+        if n != 1:
+            b[1:mx] += deltat*source.apply(deltax*np.arange(1,mx))
         b[mx] = deltax*rbc.apply_rhs(n*deltat)
 
         # Crank-Nicholson timestep at inner mesh points
