@@ -71,6 +71,17 @@ class Neumann(BC):
 
 
 class DiffusionProblem:
+    """Object specifying a diffusion problem of the form
+    
+    du/dt = kappa*d^2u/dx^2 + f(x)
+    
+    BCs
+    alpha1*u(0,t) + beta1*du(0,t)/dx = g_1(t)
+    alpha2*u(L,t) + beta2*du(L,t)/dx = g_2(t)
+    
+    IC
+    u(x,0) = h(x)
+    """
     def __init__(self,
                  kappa=1,
                  L=1,
@@ -81,12 +92,13 @@ class DiffusionProblem:
                  fd=backwardeuler):
         self.kappa = kappa   # Diffusion constant
         self.L = L           # Length of interval
-        self.ic = IC(ic)     # Initial condition u(x,0)
-        self.lbc = lbc       # Left boundary condition u(0,t)
-        self.rbc = rbc       # Right boundary condition u(L,t)
-        self.source = Source(source)  # Source function
+        self.ic = IC(ic)     # Initial condition u(x,0) = h(x)
+        self.lbc = lbc       # Left boundary condition as above
+        self.rbc = rbc       # Right boundary condition as above
+        self.source = Source(source)  # Source function f(x)
  
     def pprint(self, title=''):
+        """Print the diffusion problem with latex"""
         print(title)
         u = sp.Function('u')
         x, t = sp.symbols('x t')
@@ -96,7 +108,9 @@ class DiffusionProblem:
         self.rbc.pprint()
         self.ic.pprint()
     
-    def solve_to(self, T, mx, mt, scheme=forwardeuler, full_output=False):
+    def solve_to(self, T, mx, mt, scheme, full_output=False):
+        """Solve the diffusion problem forward to time T using the given
+        scheme."""
         xs = np.linspace(0, self.L, mx+1)     # mesh points in space
         ts = np.linspace(0, T, mt+1)     # mesh points in time
         deltax = xs[1] - xs[0]            # gridspacing in x
@@ -114,9 +128,26 @@ class DiffusionProblem:
                     self.lbc, self.rbc, self.source)
         
         return xs, uT
-
-    def plot_at_T(self, T, mx=20, mt=1000, u_exact=None, title=''):
-        xs, uT = self.solve_to(T, mx, mt)
+    
+    def error_at_T(self, T, mx, mt, u_exact):
+        xs, uT = self.solve_to(T, mx, mt, backwardeuler)
+        
+        uTsym = u_exact.subs({kappa: self.kappa,
+                                  L: self.L,
+                                  t: T})
+        u = sp.lambdify(x, uTsym)
+        print(u(xs), uT)
+        error = np.linalg.norm(abs(u(xs) - uT))
+        return error
+        
+    def solve_diffusion_problem(self, t_range, mx, mt, scheme):
+        """Solve the diffusion problem for a range of times"""
+        pass
+        
+    
+    def plot_at_T(self, T, mx=10, mt=100, u_exact=None, title=''):
+        """Plot the solution to the diffusion problem at time T"""
+        xs, uT = self.solve_to(T, mx, mt, backwardeuler)
         try:
             pl.plot(xs,uT,'ro',label='numerical')
         except:
