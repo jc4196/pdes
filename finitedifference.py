@@ -45,14 +45,20 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
          
     return u_j
 
-def forwardeuler(T, mx, mt, lmbda, u_0, lbc, rbc, source):   
+def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):   
     # Construct the forward Euler matrix
-    A_FE = tridiag((mx)*[lmbda], (mx+1)*[1-2*lmbda], (mx)*[lmbda])
+    A_FE = tridiag(mx*[lmbda], (mx+1)*[1-2*lmbda], mx*[lmbda])
     A_FE[0,0] = A_FE[mx,mx] = 1
     A_FE[0,1] = A_FE[mx,mx-1] = 0
     
     u_jp1 = np.zeros(u_0.size)      # u at next time step 
     u_j = u_0.copy()    # u at the current time step
+    
+    # Check boundary conditions
+    params = [*lbc.get_params(), *rbc.get_params()]
+    if params != [1,0,1,0] or source.get_expr() != 0:
+        print('General boundary conditions and sources not implemented for forward Euler scheme, use backward Euler or Crank-Nicholson')
+        return
     
     deltat = T / (mt+1)
     # Solve the PDE: loop over all time points
@@ -61,7 +67,8 @@ def forwardeuler(T, mx, mt, lmbda, u_0, lbc, rbc, source):
         u_jp1 = np.dot(A_FE, u_j)
         
         # Boundary conditions
-        u_jp1[0] = lbc(n*deltat); u_jp1[mx] = rbc(n*deltat)
+        u_jp1[0] = lbc.apply_rhs(n*deltat)
+        u_jp1[mx] = rbc.apply_rhs(n*deltat)
               
         # Update u_j
         u_j[:] = u_jp1[:]

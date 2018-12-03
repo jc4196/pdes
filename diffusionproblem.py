@@ -96,7 +96,7 @@ class DiffusionProblem:
         self.rbc.pprint()
         self.ic.pprint()
     
-    def solve_to(self, T, mx, mt, scheme=cranknicholson, full_output=False):
+    def solve_to(self, T, mx, mt, scheme=forwardeuler, full_output=False):
         xs = np.linspace(0, self.L, mx+1)     # mesh points in space
         ts = np.linspace(0, T, mt+1)     # mesh points in time
         deltax = xs[1] - xs[0]            # gridspacing in x
@@ -116,9 +116,12 @@ class DiffusionProblem:
         return xs, uT
 
     def plot_at_T(self, T, mx=20, mt=1000, u_exact=None, title=''):
-        xs, uT = self.solve_to(T,mx,mt)
-        pl.plot(xs,uT,'ro',label='numerical')
-        
+        xs, uT = self.solve_to(T, mx, mt)
+        try:
+            pl.plot(xs,uT,'ro',label='numerical')
+        except:
+            print('No solution found')
+            
         if u_exact:
             xs = np.linspace(0, self.L, 250)
             uTsym = u_exact.subs({kappa: self.kappa,

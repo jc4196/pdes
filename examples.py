@@ -80,10 +80,10 @@ def example7():
             
     dp7.plot_at_T(0.5, u_exact = u)
     
-#example1()    
-#example2()
-#example3()
-#example4()
-#example5()
+example1()    
+example2()
+example3()
+example4()
+example5()
 example6()
 example7()
