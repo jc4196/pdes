@@ -8,23 +8,6 @@ Created on Fri Nov 30 13:56:51 2018
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
-
-def tridiag(a, b, c, k1=-1, k2=0, k3=1):
-    # create a tridiagonal matrix on diagonals k1, k2, k3
-    return np.diag(a, k1) + np.diag(b, k2) + np.diag(c, k3)
-
-def tridiag(mx, a, b, c):
-    lower = np.zeros(mx)
-    main = np.zeros(mx+1)
-    upper = np.zeros(mx)
-    
-    lower[:] = a
-    main[:] = b
-    upper[:] = c
-    
-    return sparse.diags(diagonals = [main, lower, upper],
-                        offsets = [0, -1, 1],
-                        shape = (mx+1, mx+1))
  
 def tridiag(N, A00, A01, ANm1N, ANN, m, l, u):
     """ Construct a sparse tridiagonal matrix of the form
@@ -90,12 +73,13 @@ def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
     u_j = u_0.copy()    # u at the current time step
     
     # Check boundary conditions
-    params = [*lbc.get_params(), *rbc.get_params()]
-    if params != [1,0,1,0] or source.get_expr() != 0:
+    params = lbc.get_params() + rbc.get_params()
+
+    if params != (1,0,1,0) or source.get_expr() != 0:
         print('General boundary conditions and sources not implemented for forward Euler scheme, use backward Euler or Crank-Nicholson')
         return
     
-    deltat = T / (mt+1)
+    deltat = T / mt
     # Solve the PDE: loop over all time points
     for n in range(1, mt+1):
         # Forward Euler timestep at inner mesh points
@@ -110,6 +94,43 @@ def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
     
     return u_j
 
+def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
+    #A_FE = tridiag(mx, 1, 0, 0, 1, 1-2*lmbda, lmbda, lmbda)[1:mx]
+    
+    A_FE = sparse.diags(diagonals = [1-2*lmbda, lmbda, lmbda],
+                        offsets = [0, -1, 1],
+                        shape = (mx-1, mx-1),
+                        format='csr')
+
+    u_jp1 = np.zeros(u_0.size)      # u at next time step 
+    u_j = u_0.copy()    # u at the current time step
+    
+    deltat = T/ mt
+    
+    for n in range(1, mt+1):
+        u_jp1[1:mx] = A_FE.dot(u_j[1:mx])
+        print(u_jp1)
+        # Check for Neumann boundary conditions
+        if lbc.get_params()[1] == 0:
+            u_jp1[1] += lmbda*lbc.apply_rhs(n*deltat)
+        else:
+            pass
+        
+        if rbc.get_params()[1] == 0:
+            u_jp1[-2] += lmbda*rbc.apply_rhs(n*deltat)
+            print('here', lmbda*rbc.apply_rhs(n*deltat))
+        else:
+            pass
+        
+        # Boundary conditions
+        u_jp1[0] = lbc.apply_rhs(n*deltat)
+        u_jp1[mx] = rbc.apply_rhs(n*deltat)
+      
+    # Update u_j
+    u_j[:] = u_jp1[:]
+    
+    return u_j
+    
 def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):  
     # Parameters needed to construct the matrices
     deltax = L / mx; deltat = T / mt

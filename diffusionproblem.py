@@ -138,9 +138,9 @@ class DiffusionProblem:
     
     def plot_at_T(self,
                   T,
-                  mx=50,
-                  mt=10000,
-                  scheme=cranknicholson,
+                  mx=20,
+                  mt=1000,
+                  scheme=forwardeuler,
                   u_exact=None,
                   title=''):
         """Plot the solution to the diffusion problem at time T.
