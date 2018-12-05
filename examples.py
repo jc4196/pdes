@@ -52,14 +52,12 @@ def example4():
 def example5():
     # Example 5 (Neumann boundary condition)
 
-    #dp5 = DiffusionProblem(rbc=Neumann(1, 0))
-    #dp5.pprint() 
-
     dp5 = DiffusionProblem(lbc=Neumann(0,0), rbc=Neumann(1,0), ic=x)
     dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
-    dp5.plot_at_T(0.5, u_exact=u_first, title='Example 5')
+    err = dp5.plot_at_T(1, u_exact=u_first, title='Example 5')
+    print(err)
 
 def example6():
     # Example 6 (constant source)
@@ -80,11 +78,19 @@ def example7():
             (1/(3*pi)**2)*(1 - exp(-9*pi**2*t))*sin(3*pi*x)
             
     dp7.plot_at_T(0.5, u_exact = u)
+
+def example8():
+    dp8 = DiffusionProblem(ic=4*sin(3*pi*x))
+    
+    u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
+    err = dp8.plot_at_T(0.5, u_exact=u)
+    print(err)
     
 #example1()    
 #example2()
 #example3()
 #example4()
-example5()
+#example5()
 #example6()
 #example7()
+example8()

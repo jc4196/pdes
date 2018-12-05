@@ -138,8 +138,8 @@ class DiffusionProblem:
     
     def plot_at_T(self,
                   T,
-                  mx=300,
-                  mt=1000,
+                  mx=50,
+                  mt=10000,
                   scheme=cranknicholson,
                   u_exact=None,
                   title=''):
