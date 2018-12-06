@@ -8,9 +8,21 @@ Created on Fri Nov 30 13:56:51 2018
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
- 
-def tridiag(N, A00, A01, ANm1N, ANN, m, l, u):
-    """ Construct a sparse tridiagonal matrix of the form
+
+def tridiag(N, main, lower, upper):
+    """
+    Construct (N+1)x(N+1) sparse tridiagonal matrix
+    
+    N    highest index
+    """
+    return sparse.diags(diagonals = [main, lower, upper],
+                        offsets = [0, -1, 1],
+                        shape = (N+1, N+1),
+                        format='csr')
+    
+def tridiag_b(N, A00, A01, ANm1N, ANN, m, l, u):
+    """
+    Construct a sparse tridiagonal matrix of the form
     
     A00 A01 0 .....       0
     l   m   u  0..
@@ -94,42 +106,90 @@ def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
     
     return u_j
 
-def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
-    #A_FE = tridiag(mx, 1, 0, 0, 1, 1-2*lmbda, lmbda, lmbda)[1:mx]
-    
-    A_FE = sparse.diags(diagonals = [1-2*lmbda, lmbda, lmbda],
-                        offsets = [0, -1, 1],
-                        shape = (mx-1, mx-1),
-                        format='csr')
+def forwardeuler(T, L, mx, mt, kappa, u_0, lbc, rbc, source):
+    # Construct the forward euler matrix    
+    #A_FE = tridiag(mx, 
+    #               1-2*lmbda, 2*lmbda, 2*lmbda, 1-2*lmbda,
+    #               1-2*lmbda, lmbda, lmbda)
 
+    # Construct forward euler matrix with variable kappa
+    deltat = T/ mt; deltax = L / mx; lmbda
+    p = deltat / (deltax**2)
+    main = [1 - p*(kappa(t-0.5) - kappa(t+0.5)) for t in range(mx+1)]
+    lower = [p*kappa(t+0.5) for t in range(mx)]
+    lower[-1] *= 2
+    upper = lower.copy()
+    upper[0] *= 2
+    
+    A_FE = tridiag(mx, main, lower, upper)
+    
     u_jp1 = np.zeros(u_0.size)      # u at next time step 
     u_j = u_0.copy()    # u at the current time step
     
-    deltat = T/ mt
+    
     
     for n in range(1, mt+1):
-        u_jp1[1:mx] = A_FE.dot(u_j[1:mx])
-        print(u_jp1)
-        # Check for Neumann boundary conditions
-        if lbc.get_params()[1] == 0:
+        
+        if lbc.isDirichlet() and rbc.isDirichlet():
+            # multiply inner entries by the matrix
+            u_jp1[1:-1] = A_FE[1:-1,1:-1].dot(u_j[1:-1])
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            
+            # modify terms on and next to the boundaries
+            u_jp1[0] = lbc.apply_rhs(n*deltat)
             u_jp1[1] += lmbda*lbc.apply_rhs(n*deltat)
-        else:
-            pass
-        
-        if rbc.get_params()[1] == 0:
             u_jp1[-2] += lmbda*rbc.apply_rhs(n*deltat)
-            print('here', lmbda*rbc.apply_rhs(n*deltat))
-        else:
-            pass
-        
-        # Boundary conditions
-        u_jp1[0] = lbc.apply_rhs(n*deltat)
-        u_jp1[mx] = rbc.apply_rhs(n*deltat)
+            u_jp1[-1] = rbc.apply_rhs(n*deltat)
+            
+        elif lbc.isNeumann() and rbc.isDirichlet():
+            # include first row for Neumann condition
+            u_jp1[:-1] = A_FE[:-1,:-1].dot(u_j[:-1])
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            
+            # modify Neumann condition
+            u_jp1[0] -= 2*lmbda*deltax*lbc.apply_rhs(n*deltat)
+            
+            # modify Dirichlet condition
+            u_jp1[-2] += lmbda*rbc.apply_rhs(n*deltat)
+            u_jp1[-1] = rbc.apply_rhs(n*deltat)
+    
+        elif lbc.isDirichlet() and rbc.isNeumann():
+            u_jp1[1:] = A_FE[1:,1:].dot(u_j[1:])
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            
+            # modify Dirichlet condition
+            u_jp1[0] = lbc.apply_rhs(n*deltat)
+            u_jp1[1] += lmbda*lbc.apply_rhs(n*deltat)
+            
+            # modify Neumann condition
+            u_jp1[-1] += 2*lmbda*deltax*rbc.apply_rhs(n*deltat)
       
-    # Update u_j
-    u_j[:] = u_jp1[:]
+        elif lbc.isNeumann() and rbc.isNeumann():
+            # use whole matrix
+            u_jp1 = A_FE.dot(u_j)
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            
+            # modify boundaries
+            u_jp1[0] -= 2*lmbda*deltax*lbc.apply_rhs(n*deltat)
+            u_jp1[-1] += 2*lmbda*deltax*rbc.apply_rhs(n*deltat)
+        
+        else:
+            print('General boundary conditions not implemented')
+            return
+        
+        # Update u_j
+        u_j[:] = u_jp1[:]
     
     return u_j
+
     
 def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):  
     # Parameters needed to construct the matrices

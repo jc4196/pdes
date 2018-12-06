@@ -12,7 +12,6 @@ init_printing()
 
 def example1():
     # Example 1 (These options are the defaults)
-    
     dp1 = DiffusionProblem()
     dp1.pprint('Diffusion Example 1')
     
@@ -35,10 +34,10 @@ def example2():
 def example3():
     # Example 3 (new boundary condition)
     # u(1,t) = 1
-    
-    dp3 = DiffusionProblem(rbc=Dirichlet(1,1))
-    #dp3.pprint('Diffusion Example 3')
-    dp3.plot_at_T(0.2, title='Example 3')
+
+    dp3 = DiffusionProblem(rbc= Dirichlet(1,1))
+    dp3.pprint('Diffusion Example 3')
+    dp3.plot_at_T(0.02, title='Example 3')
 
 def example4():
     # Example 4 (Initial condition)
@@ -83,14 +82,14 @@ def example8():
     dp8 = DiffusionProblem(ic=4*sin(3*pi*x))
     
     u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
-    err = dp8.plot_at_T(0.5, u_exact=u)
+    err = dp8.plot_at_T(0.1, u_exact=u)
     print(err)
     
 #example1()    
 #example2()
-example3()
+#example3()
 #example4()
 #example5()
 #example6()
 #example7()
-#example8()
+example8()
