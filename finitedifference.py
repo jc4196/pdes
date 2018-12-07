@@ -271,10 +271,14 @@ def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
 
 
     
-def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):  
-    B_FE = (mx,
-            1+2*lmbda, -2*lmbda, -2*lmbda, 1+2*lmbda,
-            1+2*lmbda, -lmbda, -lmbda)
+def cranknicholson(T, L, mx, mt, lmbda, u0, lbc, rbc, source):  
+    A_CN = tridiag(mx,
+                   1-lmbda, -lmbda, -lmbda, 1-lmbda,
+                   -0.5*lmbda, 1+lmbda, -0.5*lmbda)
+    
+    B_CN = tridiag(mx,
+                   1-lmbda, -lmbda, -lmbda, 1-lmbda,
+                   0.5*lmbda, 1-lmbda, 0.5*lmbda)
  
     deltat = T/ mt; deltax = L / mx
 
@@ -284,9 +288,34 @@ def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
     # Solve the PDE: loop over all time points
     for n in range(1, mt+1):  
         if lbc.isDirichlet() and rbc.isDirichlet():
-            pass
+            # create b vector
+            b = u_j[1:-1].copy()
+            b[0] += 0.5*lmbda*(lbc.apply_rhs(n*deltat) + lbc.apply_rhs((n+1)*deltat))
+            b[-1] += 0.5*lmbda*(rbc.apply_rhs(n*deltat) + lbc.apply_rhs((n+1)*deltat))
+            
+            # solve for next step
+            u_jp1[1:-1] = spsolve(A_CN[1:-1,1:-1], B_CN[1:-1,1:-1].dot(b))
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
+            
+            # set boundaries
+            u_jp1[0] = lbc.apply_rhs((n+1)*deltat)
+            u_jp1[-1] = rbc.apply_rhs((n+1)*deltat) 
         elif lbc.isNeumann() and rbc.isDirichlet():
-            pass
+            # create b vector
+            b = u_j[:-1].copy()
+            b[0] -= 2*lmbda*deltax*lbc.apply_rhs((n+1)*deltat)
+            b[-1] += lmbda*rbc.apply_rhs((n+1)*deltat)
+            
+            # solve for next step
+            u_jp1[:-1] = spsolve(A_BE[:-1,:-1], b)
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
+         
+            # set boundary
+            u_jp1[-1] = rbc.apply_rhs((n+1)*deltat)
         elif lbc.isDirichlet() and rbc.isNeumann():
             pass
         elif lbc.isNeumann() and rbc.isNeumann():

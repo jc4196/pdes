@@ -148,7 +148,7 @@ class DiffusionProblem:
                   T,
                   mx=30,
                   mt=1000,
-                  scheme=forwardeuler,
+                  scheme=cranknicholson,
                   u_exact=None,
                   title=''):
         """Plot the solution to the diffusion problem at time T.
