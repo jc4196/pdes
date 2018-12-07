@@ -96,9 +96,8 @@ class DiffusionProblem:
                  ic=sp.sin(sp.pi*x),
                  lbc=Dirichlet(0,0),
                  rbc=Dirichlet(1, 0),
-                 source=0,
-                 fd=backwardeuler):
-        self.kappa = sp.lambdify(x, kappa, 'numpy')   # Diffusion constant
+                 source=0):
+        self.kappa = kappa   # Diffusion constant
         self.L = L           # Length of interval
         self.ic = IC(ic)     # Initial condition u(x,0) = h(x)
         self.lbc = lbc       # Left boundary condition as above
@@ -123,16 +122,16 @@ class DiffusionProblem:
         ts = np.linspace(0, T, mt+1)     # mesh points in time
         deltax = xs[1] - xs[0]            # gridspacing in x
         deltat = ts[1] - ts[0]            # gridspacing in t
-        #lmbda = self.kappa*deltat/(deltax**2)    # mesh fourier number
+        lmbda = self.kappa*deltat/(deltax**2)    # mesh fourier number
     
         if full_output:
             print("deltax =",deltax)
             print("deltat =",deltat)
-        #    print("lambda =",lmbda)
+            print("lambda =",lmbda)
     
         u0 = self.ic.get_initial_state(xs)
         
-        uT = scheme(T, self.L, mx, mt, self.kappa, u0,
+        uT = scheme(T, self.L, mx, mt, lmbda, u0,
                     self.lbc, self.rbc, self.source)
         
         return xs, uT
@@ -146,13 +145,13 @@ class DiffusionProblem:
                   T,
                   mx=30,
                   mt=1000,
-                  scheme=forwardeuler,
+                  scheme=backwardeuler,
                   u_exact=None,
                   title=''):
         """Plot the solution to the diffusion problem at time T.
         If the exact solution is known, plot that too and return the 
         error at time T."""
-        xs, uT = self.solve_to(T, mx, mt, scheme, full_output=True)
+        xs, uT = self.solve_to(T, mx, mt, scheme, full_output=False)
         try:
             pl.plot(xs,uT,'ro',label='numerical')
         except:

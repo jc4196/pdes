@@ -9,7 +9,7 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
-def tridiag(N, main, lower, upper):
+def tridiag_n(N, main, lower, upper):
     """
     Construct (N+1)x(N+1) sparse tridiagonal matrix
     
@@ -20,7 +20,7 @@ def tridiag(N, main, lower, upper):
                         shape = (N+1, N+1),
                         format='csr')
     
-def tridiag_b(N, A00, A01, ANm1N, ANN, m, l, u):
+def tridiag(N, A00, A01, ANm1N, ANN, m, l, u):
     """
     Construct a sparse tridiagonal matrix of the form
     
@@ -77,56 +77,97 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
          
     return u_j
 
-def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):   
-    # Construct the forward Euler matrix
-    A_FE = tridiag(mx, 1, 0, 0, 1, 1-2*lmbda, lmbda, lmbda)
+def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
     
-    u_jp1 = np.zeros(u_0.size)      # u at next time step 
-    u_j = u_0.copy()    # u at the current time step
-    
-    # Check boundary conditions
-    params = lbc.get_params() + rbc.get_params()
+    A_BE = tridiag(mx,
+                   1+2*lmbda, -2*lmbda, -2*lmbda, 1+2*lmbda,
+                   1+2*lmbda, -lmbda, -lmbda)
 
-    if params != (1,0,1,0) or source.get_expr() != 0:
-        print('General boundary conditions and sources not implemented for forward Euler scheme, use backward Euler or Crank-Nicholson')
-        return
-    
-    deltat = T / mt
+    deltat = T/ mt; deltax = L / mx
+
+    u_jp1 = np.zeros(u0.size)      # u at next time step 
+    u_j = u0.copy()                # u at current time step
+
     # Solve the PDE: loop over all time points
-    for n in range(1, mt+1):
-        # Forward Euler timestep at inner mesh points
-        u_jp1 = A_FE.dot(u_j)
-        
-        # Boundary conditions
-        u_jp1[0] = lbc.apply_rhs(n*deltat)
-        u_jp1[mx] = rbc.apply_rhs(n*deltat)
-              
+    for n in range(1, mt+1):  
+        if lbc.isDirichlet() and rbc.isDirichlet():
+            # create b vector
+            b = u_j[1:-1].copy()
+            b[0] += lmbda*lbc.apply_rhs((n+1)*deltat)
+            b[-1] += lmbda*rbc.apply_rhs((n+1)*deltat)
+            
+            # solve for next step
+            u_jp1[1:-1] = spsolve(A_BE[1:-1,1:-1], b)
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            
+            # set boundaries
+            u_jp1[0] = lbc.apply_rhs((n+1)*deltat)
+            u_jp1[-1] = rbc.apply_rhs((n+1)*deltat) 
+            
+        elif lbc.isNeumann() and rbc.isDirichlet():
+            # create b vector
+            b = u_j[:-1].copy()
+            b[0] -= 2*lmbda*deltax*lbc.apply_rhs((n+1)*deltat)
+            b[-1] += lmbda*rbc.apply_rhs((n+1)*deltat)
+            
+            # solve for next step
+            u_jp1[:-1] = spsolve(A_BE[:-1,:-1], b)
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+         
+            # set boundary
+            u_jp1[-1] = rbc.apply_rhs((n+1)*deltat)
+    
+        elif lbc.isDirichlet() and rbc.isNeumann():
+            # create b vector
+            b = u_j[1:].copy()
+            b[0] += lmbda*lbc.apply_rhs((n+1)*deltat)
+            b[-1] += 2*lmbda*deltax*rbc.apply_rhs((n+1)*deltat)
+            
+            # solve for next step
+            u_jp1[1:] = spsolve(A_BE[1:,1:], b)
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            
+            # set boundary
+            u_jp1[0] = lbc.apply_rhs((n+1)*deltat)
+
+        elif lbc.isNeumann() and rbc.isNeumann():
+            # create b vector
+            b = u_j.copy()
+            b[0] -= 2*lmbda*deltax*lbc.apply_rhs((n+1)*deltat)
+            b[-1] += 2*lmbda*deltax*rbc.apply_rhs((n+1)*deltat)
+            
+            # solve for next step
+            u_jp1 = spsolve(A_BE, u_j)
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            
+        else:
+            print('General boundary conditions not implemented')
+            return
+            
         # Update u_j
         u_j[:] = u_jp1[:]
-    
+         
     return u_j
 
-def forwardeuler(T, L, mx, mt, kappa, u_0, lbc, rbc, source):
-    # Construct the forward euler matrix    
-    #A_FE = tridiag(mx, 
-    #               1-2*lmbda, 2*lmbda, 2*lmbda, 1-2*lmbda,
-    #               1-2*lmbda, lmbda, lmbda)
-
-    # Construct forward euler matrix with variable kappa
-    deltat = T/ mt; deltax = L / mx; lmbda
-    p = deltat / (deltax**2)
-    main = [1 - p*(kappa(t-0.5) - kappa(t+0.5)) for t in range(mx+1)]
-    lower = [p*kappa(t+0.5) for t in range(mx)]
-    lower[-1] *= 2
-    upper = lower.copy()
-    upper[0] *= 2
     
-    A_FE = tridiag(mx, main, lower, upper)
+def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
+    # Construct the forward euler matrix    
+    A_FE = tridiag(mx, 
+                   1-2*lmbda, 2*lmbda, 2*lmbda, 1-2*lmbda,
+                   1-2*lmbda, lmbda, lmbda)
+
+    deltat = T/ mt; deltax = L / mx
     
     u_jp1 = np.zeros(u_0.size)      # u at next time step 
     u_j = u_0.copy()    # u at the current time step
-    
-    
     
     for n in range(1, mt+1):
         
@@ -227,3 +268,33 @@ def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
         u_j[:] = u_jp1[:]    
         
     return u_j  
+
+
+    
+def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):  
+    B_FE = (mx,
+            1+2*lmbda, -2*lmbda, -2*lmbda, 1+2*lmbda,
+            1+2*lmbda, -lmbda, -lmbda)
+ 
+    deltat = T/ mt; deltax = L / mx
+
+    u_jp1 = np.zeros(u0.size)      # u at next time step 
+    u_j = u0.copy()                # u at current time step
+
+    # Solve the PDE: loop over all time points
+    for n in range(1, mt+1):  
+        if lbc.isDirichlet() and rbc.isDirichlet():
+            pass
+        elif lbc.isNeumann() and rbc.isDirichlet():
+            pass
+        elif lbc.isDirichlet() and rbc.isNeumann():
+            pass
+        elif lbc.isNeumann() and rbc.isNeumann():
+            pass
+        else:
+            print('General boundary conditions not implemented')
+    
+        # Update u_j
+        u_j[:] = u_jp1[:]
+         
+    return u_j

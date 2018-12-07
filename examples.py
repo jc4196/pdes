@@ -76,10 +76,11 @@ def example7():
     u = exp(-(pi**2)*t)*sin(pi*x) + \
             (1/(3*pi)**2)*(1 - exp(-9*pi**2*t))*sin(3*pi*x)
             
-    dp7.plot_at_T(0.5, u_exact = u)
+    dp7.plot_at_T(0.4, u_exact = u)
 
 def example8():
     dp8 = DiffusionProblem(ic=4*sin(3*pi*x))
+    dp8.pprint('Diffusion Problem 8')
     
     u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
     err = dp8.plot_at_T(0.1, u_exact=u)
@@ -91,5 +92,5 @@ def example8():
 #example4()
 #example5()
 #example6()
-#example7()
-example8()
+example7()
+#example8()
