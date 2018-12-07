@@ -66,7 +66,7 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
         # Add boundary conditions and source to vector u_j
         u_j[0] = deltax*lbc.apply_rhs(n*deltat) 
         if n != 1:
-            u_j[1:mx] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_j[1:mx] += deltat*source(deltax*np.arange(1,mx), n*deltat)
         u_j[mx] = deltax*rbc.apply_rhs(n*deltat)
         
         # Backward Euler timestep at inner mesh points
@@ -100,7 +100,7 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
             u_jp1[1:-1] = spsolve(A_BE[1:-1,1:-1], b)
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
             # set boundaries
             u_jp1[0] = lbc.apply_rhs((n+1)*deltat)
@@ -116,7 +116,7 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
             u_jp1[:-1] = spsolve(A_BE[:-1,:-1], b)
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
          
             # set boundary
             u_jp1[-1] = rbc.apply_rhs((n+1)*deltat)
@@ -131,7 +131,7 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
             u_jp1[1:] = spsolve(A_BE[1:,1:], b)
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
             # set boundary
             u_jp1[0] = lbc.apply_rhs((n+1)*deltat)
@@ -146,7 +146,7 @@ def backwardeuler(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
             u_jp1 = spsolve(A_BE, u_j)
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
         else:
             print('General boundary conditions not implemented')
@@ -176,7 +176,7 @@ def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
             u_jp1[1:-1] = A_FE[1:-1,1:-1].dot(u_j[1:-1])
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
             # modify terms on and next to the boundaries
             u_jp1[0] = lbc.apply_rhs(n*deltat)
@@ -189,7 +189,7 @@ def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
             u_jp1[:-1] = A_FE[:-1,:-1].dot(u_j[:-1])
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
             # modify Neumann condition
             u_jp1[0] -= 2*lmbda*deltax*lbc.apply_rhs(n*deltat)
@@ -202,7 +202,7 @@ def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
             u_jp1[1:] = A_FE[1:,1:].dot(u_j[1:])
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
             # modify Dirichlet condition
             u_jp1[0] = lbc.apply_rhs(n*deltat)
@@ -216,7 +216,7 @@ def forwardeuler(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
             u_jp1 = A_FE.dot(u_j)
             
             # add source term
-            u_jp1[1:-1] += deltat*source.apply(deltax*np.arange(1,mx))
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
             # modify boundaries
             u_jp1[0] -= 2*lmbda*deltax*lbc.apply_rhs(n*deltat)

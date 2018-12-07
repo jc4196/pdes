@@ -102,7 +102,10 @@ class DiffusionProblem:
         self.ic = IC(ic)     # Initial condition u(x,0) = h(x)
         self.lbc = lbc       # Left boundary condition as above
         self.rbc = rbc       # Right boundary condition as above
-        self.source = Source(source)  # Source function f(x)
+        self.source_expr = source # source expression for printing
+        
+        # Source function f(x)
+        self.source = sp.lambdify((x, t), source, 'numpy')  
  
     def pprint(self, title=''):
         """Print the diffusion problem with latex"""
@@ -110,7 +113,7 @@ class DiffusionProblem:
         u = sp.Function('u')
         x, t = sp.symbols('x t')
         display(sp.Eq(u(x,t).diff(t),
-                      kappa*u(x,t).diff(x,2) + self.source.get_expr()))
+                      kappa*u(x,t).diff(x,2) + self.source_expr))
         self.lbc.pprint()
         self.rbc.pprint()
         self.ic.pprint()
@@ -145,7 +148,7 @@ class DiffusionProblem:
                   T,
                   mx=30,
                   mt=1000,
-                  scheme=backwardeuler,
+                  scheme=forwardeuler,
                   u_exact=None,
                   title=''):
         """Plot the solution to the diffusion problem at time T.
