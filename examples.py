@@ -18,10 +18,10 @@ def example1():
     # exact solution
     u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L)
     err = dp1.plot_at_T(0.1, u_exact=u, title='Example 1')
-    print('error = {:.3f}'.format(err))
+    print('error = {:.8f}'.format(err))
     
 def example2():
-    # Example 2 (another frequency)
+    # Example 2 (another frequency in the initial condition)
       
     dp2 = DiffusionProblem(ic=sin(pi*x) + 0.5*sin(3*pi*x))
     dp2.pprint('Diffusion Example 2')
@@ -38,7 +38,8 @@ def example3():
     dp3 = DiffusionProblem(rbc= Dirichlet(1,1))
     dp3.pprint('Diffusion Example 3')
     dp3.plot_at_T(0.02, title='Example 3')
-
+    
+    
 def example4():
     # Example 4 (Initial condition)
     
@@ -55,7 +56,7 @@ def example5():
     dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
-    err = dp5.plot_at_T(0.2, u_exact=u_first, title='Example 5')
+    err = dp5.plot_at_T(1, u_exact=u_first, title='Example 5')
     print(err)
 
 def example6():
@@ -88,9 +89,9 @@ def example8():
     
 example1()    
 #example2()
-#example3()
+example3()
 #example4()
-example5()
+#example5()
 #example6()
 #example7()
 #example8()

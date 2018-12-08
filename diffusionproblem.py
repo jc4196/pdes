@@ -12,7 +12,7 @@ from sympy.abc import kappa, L, x, t
 from IPython.display import display
 import matplotlib.pylab as pl
 
-from finitedifference import backwardeuler, forwardeuler, cranknicholson
+from finitedifference import *
 
 
 class IC:
@@ -118,6 +118,18 @@ class DiffusionProblem:
         self.rbc.pprint()
         self.ic.pprint()
     
+    def isDirichletDirichlet():
+        return lbc.isDirichlet() and rbc.isDirichlet()
+    
+    def isDirichletNeumann():
+        return lbc.isDirichlet() and rbc.isNeumann()
+    
+    def isNeumannDirichlet():
+        return lbc.isDirichlet() and rbc.isNeumann()
+
+    def isNeumannNeumann():
+        return lbc.isNeumann() and rbc.isNeumann()
+    
     def solve_to(self, T, mx, mt, scheme, full_output=False):
         """Solve the diffusion problem forward to time T using the given
         scheme."""
@@ -146,7 +158,7 @@ class DiffusionProblem:
     
     def plot_at_T(self,
                   T,
-                  mx=30,
+                  mx=200,
                   mt=1000,
                   scheme=cranknicholson,
                   u_exact=None,
@@ -154,7 +166,7 @@ class DiffusionProblem:
         """Plot the solution to the diffusion problem at time T.
         If the exact solution is known, plot that too and return the 
         error at time T."""
-        xs, uT = self.solve_to(T, mx, mt, scheme, full_output=True)
+        xs, uT = self.solve_to(T, mx, mt, scheme, full_output=False)
         try:
             pl.plot(xs,uT,'ro',label='numerical')
         except:
@@ -174,6 +186,7 @@ class DiffusionProblem:
         pl.title(title)
         pl.legend(loc='best')
         pl.show()
+        
         if u_exact:
             return error
     
