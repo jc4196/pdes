@@ -9,17 +9,7 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
-def tridiag_n(N, main, lower, upper):
-    """
-    Construct (N+1)x(N+1) sparse tridiagonal matrix
-    
-    N    highest index
-    """
-    return sparse.diags(diagonals = [main, lower, upper],
-                        offsets = [0, -1, 1],
-                        shape = (N+1, N+1),
-                        format='csr')
-    
+   
 def tridiag(N, A00, A01, ANm1N, ANN, m, l, u):
     """
     Construct a sparse tridiagonal matrix of the form
@@ -258,7 +248,7 @@ def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
         # Add boundary conditions and source to vector b
         b[0] = deltax*lbc.apply_rhs(n*deltat) 
         if n != 1:
-            b[1:mx] += deltat*source.apply(deltax*np.arange(1,mx))
+            b[1:mx] += deltat*source.apply(deltax*np.arange(1,mx), n*deltat)
         b[mx] = deltax*rbc.apply_rhs(n*deltat)
 
         # Crank-Nicholson timestep at inner mesh points
@@ -273,35 +263,40 @@ def cranknicholson(T, L, mx, mt, lmbda, u_0, lbc, rbc, source):
     
 def cranknicholson(T, L, mx, mt, lmbda, u0, lbc, rbc, source):  
     A_CN = tridiag(mx,
-                   1-lmbda, -lmbda, -lmbda, 1-lmbda,
-                   -0.5*lmbda, 1+lmbda, -0.5*lmbda)
+                   1+lmbda, -lmbda, -lmbda, 1+lmbda,
+                   1+lmbda, -0.5*lmbda, -0.5*lmbda)
     
     B_CN = tridiag(mx,
-                   1-lmbda, -lmbda, -lmbda, 1-lmbda,
-                   0.5*lmbda, 1-lmbda, 0.5*lmbda)
+                   1-lmbda, lmbda, lmbda, 1-lmbda,
+                   1-lmbda, 0.5*lmbda, 0.5*lmbda)
  
     deltat = T/ mt; deltax = L / mx
 
     u_jp1 = np.zeros(u0.size)      # u at next time step 
     u_j = u0.copy()                # u at current time step
 
+    # aliases for boundary functions
+    p = lbc.apply_rhs
+    q = rbc.apply_rhs
+    
     # Solve the PDE: loop over all time points
-    for n in range(1, mt+1):  
+    for n in range(mt):  
         if lbc.isDirichlet() and rbc.isDirichlet():
             # create b vector
-            b = u_j[1:-1].copy()
-            b[0] += 0.5*lmbda*(lbc.apply_rhs(n*deltat) + lbc.apply_rhs((n+1)*deltat))
-            b[-1] += 0.5*lmbda*(rbc.apply_rhs(n*deltat) + lbc.apply_rhs((n+1)*deltat))
+            b = B_CN[1:-1,1:-1].dot(u_j[1:-1])
+            b[0] += 0.5*lmbda*(p(n*deltat) + p((n+1)*deltat))
+            b[-1] += 0.5*lmbda*(q(n*deltat) + q((n+1)*deltat))
             
             # solve for next step
-            u_jp1[1:-1] = spsolve(A_CN[1:-1,1:-1], B_CN[1:-1,1:-1].dot(b))
+            u_jp1[1:-1] = spsolve(A_CN[1:-1,1:-1], b)
             
             # add source term
             u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
             
             # set boundaries
-            u_jp1[0] = lbc.apply_rhs((n+1)*deltat)
-            u_jp1[-1] = rbc.apply_rhs((n+1)*deltat) 
+            u_jp1[0] = p(n*deltat)
+            u_jp1[-1] = q(n*deltat) 
+            
         elif lbc.isNeumann() and rbc.isDirichlet():
             # create b vector
             b = u_j[:-1].copy()
@@ -319,7 +314,16 @@ def cranknicholson(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
         elif lbc.isDirichlet() and rbc.isNeumann():
             pass
         elif lbc.isNeumann() and rbc.isNeumann():
-            pass
+            # create b vector
+            b = B_CN.dot(u_j)
+            b[0] -= lmbda*deltax*(p(n*deltat) + p((n+1)*deltat))
+            b[-1] += lmbda*deltax*(q(n*deltat) + q((n+1)*deltat))
+            
+            u_jp1 = spsolve(A_CN, b)
+            
+            # add source term
+            u_jp1[1:-1] += deltat*source(deltax*np.arange(1,mx), n*deltat)
+            
         else:
             print('General boundary conditions not implemented')
     

@@ -154,7 +154,7 @@ class DiffusionProblem:
         """Plot the solution to the diffusion problem at time T.
         If the exact solution is known, plot that too and return the 
         error at time T."""
-        xs, uT = self.solve_to(T, mx, mt, scheme, full_output=False)
+        xs, uT = self.solve_to(T, mx, mt, scheme, full_output=True)
         try:
             pl.plot(xs,uT,'ro',label='numerical')
         except:
