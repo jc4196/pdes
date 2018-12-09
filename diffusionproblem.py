@@ -8,37 +8,12 @@ Created on Fri Nov 30 11:55:01 2018
 import numpy as np
 import sympy as sp
 from sympy.abc import kappa, L, x, t
+from scipy.sparse.linalg import spsolve
 
 from IPython.display import display
 import matplotlib.pylab as pl
 
-from finitedifference import *
-
-
-class IC:
-    def __init__(self, expr):
-        self.u = sp.Function('u')
-        self.expr = expr
-        self.ic_fn = np.vectorize(sp.lambdify(x, self.expr, 'numpy'),
-                                  otypes=[np.float32])
-    
-    def get_initial_state(self, xs):
-        return self.ic_fn(xs)
-        
-    def pprint(self):
-        display(sp.Eq(self.u(x, 0), self.expr))
-
-class Source:
-    def __init__(self, expr):
-        self.expr = expr
-        self.source_fn = sp.lambdify(x, self.expr, 'numpy')
-    
-    def apply(self, xs):
-        return self.source_fn(xs)
-    
-    def get_expr(self):
-        return self.expr
-        
+from schemes import backwardeuler, cranknicholson, forwardeuler
 
 class BC:
     """General boundary condition for the diffusion problem of the form
@@ -99,13 +74,18 @@ class DiffusionProblem:
                  source=0):
         self.kappa = kappa   # Diffusion constant
         self.L = L           # Length of interval
-        self.ic = IC(ic)     # Initial condition u(x,0) = h(x)
         self.lbc = lbc       # Left boundary condition as above
         self.rbc = rbc       # Right boundary condition as above
-        self.source_expr = source # source expression for printing
+        
+        # Initial condition function h(x)
+        self.ic_expr = ic  # initial condition expression for printing
+        self.ic = np.vectorize(sp.lambdify(x, self.ic_expr, 'numpy'),
+                               otypes=[np.float32])
         
         # Source function f(x)
-        self.source = sp.lambdify((x, t), source, 'numpy')  
+        self.source_expr = source # source expression for printing
+        self.source = np.vectorize(sp.lambdify((x, t), source, 'numpy'),
+                                   otypes=[np.float32])  
  
     def pprint(self, title=''):
         """Print the diffusion problem with latex"""
@@ -116,20 +96,20 @@ class DiffusionProblem:
                       kappa*u(x,t).diff(x,2) + self.source_expr))
         self.lbc.pprint()
         self.rbc.pprint()
-        self.ic.pprint()
+        display(sp.Eq(u(x,0), self.ic_expr))
     
-    def isDirichletDirichlet():
-        return lbc.isDirichlet() and rbc.isDirichlet()
-    
-    def isDirichletNeumann():
-        return lbc.isDirichlet() and rbc.isNeumann()
-    
-    def isNeumannDirichlet():
-        return lbc.isDirichlet() and rbc.isNeumann()
-
-    def isNeumannNeumann():
-        return lbc.isNeumann() and rbc.isNeumann()
-    
+    def boundarytype(self, mx):
+        if self.lbc.isDirichlet() and self.rbc.isDirichlet():
+            return 1, mx
+        elif self.lbc.isDirichlet() and self.rbc.isNeumann():
+            return 1, mx+1
+        elif self.lbc.isDirichlet() and self.rbc.isNeumann():
+            return 0, mx
+        elif self.lbc.isNeumann() and self.rbc.isNeumann():
+            return 0, mx+1
+        else:
+            raise Exception('Boundary type not recognised')
+            
     def solve_to(self, T, mx, mt, scheme, full_output=False):
         """Solve the diffusion problem forward to time T using the given
         scheme."""
@@ -144,13 +124,51 @@ class DiffusionProblem:
             print("deltat =",deltat)
             print("lambda =",lmbda)
     
-        u0 = self.ic.get_initial_state(xs)
+        u0 = self.ic(xs)
         
         uT = scheme(T, self.L, mx, mt, lmbda, u0,
                     self.lbc, self.rbc, self.source)
         
         return xs, uT
+    
+    def solve_to(self, T, mx, mt, scheme):
+        xs = np.linspace(0, self.L, mx+1)     # mesh points in space
+        ts = np.linspace(0, T, mt+1)     # mesh points in time
+        deltax = xs[1] - xs[0]            # gridspacing in x
+        deltat = ts[1] - ts[0]            # gridspacing in t
+        lmbda = self.kappa*deltat/(deltax**2)    # mesh fourier number
+
+        u_j = self.ic(xs)
+        u_jp1 = np.zeros(xs.size)
         
+        # Get matrices and vector for the particular scheme
+        A, B, v = scheme(mx,
+                         deltax,
+                         deltat,
+                         lmbda,
+                         self.lbc.apply_rhs,
+                         self.rbc.apply_rhs)
+        
+        a, b = self.boundarytype(mx)
+        
+        for n in range(1, mt+1):
+            # Solve matrix equation A*u_{j+1} = B*u_j + v
+            u_jp1[a:b] = spsolve(A[a:b,a:b],
+                                 B[a:b,a:b].dot(u_j[a:b]) + v(n*deltat)[a:b])
+            
+            # add source to inner terms
+            u_jp1[1:-1] += deltat*self.source(xs[1:-1], n*deltat)
+            
+            # fix Dirichlet boundary conditions
+            if a == 1:
+                u_jp1[0] = self.lbc.apply_rhs(n*deltat)
+            if b == mx:
+                u_jp1[-1] = self.rbc.apply_rhs(n*deltat)
+            
+            u_j[:] = u_jp1[:]
+        
+        return xs, u_j
+    
     def solve_diffusion_problem(self, t_range, mx, mt, scheme):
         """Solve the diffusion problem for a range of times"""
         pass
@@ -158,15 +176,15 @@ class DiffusionProblem:
     
     def plot_at_T(self,
                   T,
-                  mx=200,
+                  mx=10,
                   mt=1000,
-                  scheme=cranknicholson,
+                  scheme=forwardeuler,
                   u_exact=None,
                   title=''):
         """Plot the solution to the diffusion problem at time T.
         If the exact solution is known, plot that too and return the 
         error at time T."""
-        xs, uT = self.solve_to(T, mx, mt, scheme, full_output=False)
+        xs, uT = self.solve_to(T, mx, mt, scheme)
         try:
             pl.plot(xs,uT,'ro',label='numerical')
         except:

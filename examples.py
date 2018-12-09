@@ -5,7 +5,7 @@ Created on Fri Nov 30 21:34:47 2018
 @author: james
 """
 
-from diffusionproblem import DiffusionProblem, Dirichlet, Neumann, IC, BC
+from diffusionproblem import DiffusionProblem, Dirichlet, Neumann
 from sympy import *
 from sympy.abc import x, t, L, kappa
 init_printing()
@@ -88,10 +88,10 @@ def example8():
     print(err)
     
 example1()    
-#example2()
+example2()
 example3()
-#example4()
-#example5()
-#example6()
-#example7()
-#example8()
+example4()
+example5()
+example6()
+example7()
+example8()
