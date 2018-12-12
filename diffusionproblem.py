@@ -176,9 +176,9 @@ class DiffusionProblem:
     
     def plot_at_T(self,
                   T,
-                  mx=10,
+                  mx=100,
                   mt=1000,
-                  scheme=forwardeuler,
+                  scheme=backwardeuler,
                   u_exact=None,
                   title=''):
         """Plot the solution to the diffusion problem at time T.
@@ -213,7 +213,7 @@ class DiffusionProblem:
         time frames"""
         pass
     
-    def error_at_T(self, T, mx, mt, u_exact, scheme=backwardeuler):
+    def error_at_T(self, T, mx, mt, u_exact, scheme):
         """Return the error (L2 norm) between the solution of the 
         equation at T and the exact solution"""
         xs, uT = self.solve_to(T, mx, mt, scheme)

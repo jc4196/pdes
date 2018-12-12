@@ -6,8 +6,11 @@ Created on Fri Nov 30 21:34:47 2018
 """
 
 from diffusionproblem import DiffusionProblem, Dirichlet, Neumann
+from schemes import *
 from sympy import *
 from sympy.abc import x, t, L, kappa
+import numpy as np
+
 init_printing()
 
 def example1():
@@ -17,8 +20,16 @@ def example1():
     
     # exact solution
     u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L)
-    err = dp1.plot_at_T(0.1, u_exact=u, title='Example 1')
+    err = dp1.plot_at_T(0.5, u_exact=u, title='Example 1')
     print('error = {:.8f}'.format(err))
+    
+    # test of forward euler scheme
+    # deltax = 0.1 -> mx = 10
+    # deltat 
+    mt = 5*np.logspace(2, 5, 4, dtype=np.int32)
+    print(mt)
+    errors = [dp1.error_at_T(0.5, 10, n, u, scheme=forwardeuler) for n in mt]
+    print(errors)
     
 def example2():
     # Example 2 (another frequency in the initial condition)
@@ -88,10 +99,10 @@ def example8():
     print(err)
     
 example1()    
-example2()
-example3()
-example4()
-example5()
-example6()
-example7()
-example8()
+#example2()
+#example3()
+#example4()
+#example5()
+#example6()
+#example7()
+#example8()
