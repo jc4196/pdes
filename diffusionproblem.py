@@ -79,7 +79,7 @@ class DiffusionProblem:
         
         # Initial condition function h(x)
         self.ic_expr = ic  # initial condition expression for printing
-        self.ic = np.vectorize(sp.lambdify(x, self.ic_expr, 'numpy'),
+        self.ic = np.vectorize(sp.lambdify(x, ic, 'numpy'),
                                otypes=[np.float32])
         
         # Source function f(x)
