@@ -7,14 +7,14 @@ Created on Fri Nov 30 11:55:01 2018
 
 import numpy as np
 import sympy as sp
-from sympy.abc import kappa, L, x, t
+from sympy.abc import kappa, L, x, t, c
 from scipy.sparse.linalg import spsolve
 
 from IPython.display import display
 import matplotlib.pylab as pl
 
 from schemes import backwardeuler, cranknicholson, forwardeuler
-from discretesolvepde import solve_diffusion_pde, plot_solution
+from discretesolvepde import *
 
 class BC:
     """General boundary condition for the diffusion problem of the form
@@ -111,121 +111,136 @@ class DiffusionProblem:
         else:
             raise Exception('Boundary type not recognised')
     
-    def solve_to(self, T, mx, mt, scheme):
+    def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
+        xs, uT =  solve_diffusion_pde(mx, mt, self.L, T,
+                                      self.kappa, self.source, self.ic,
+                                      self.lbc.apply_rhs, self.rbc.apply_rhs,
+                                      self.boundarytype(mx),
+                                      scheme)
+        
+        if u_exact:
+            uTsym = u_exact.subs({kappa: self.kappa,
+                                  L: self.L,
+                                  t: T})
+            u = sp.lambdify(x, uTsym)
+            error = np.linalg.norm(u(xs) - uT)            
+            if plot:       
+                plot_solution(xs, uT, u, title=title, uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
+        else:
+            error = None
+            if plot:
+                plot_solution(xs, uT, title=title)            
+        
+        return uT, error
+
+    def solve_at_Ts(self, t_range, mx, mt, scheme, animate=True):
+        """Solve the diffusion problem for a range of times and animate the
+        solution"""
+        pass
+    
+    
+class WaveProblem():
+    def __init__(self,
+                 c=1,
+                 L=1,
+                 ix=sp.sin(sp.pi*x),
+                 iv=0,
+                 lbc=Dirichlet(0,0),
+                 rbc=Dirichlet(1, 0),
+                 source=0):
+    
+        self.c = c   # Wave speed
+        self.L = L           # Length of interval
+        self.lbc = lbc       # Left boundary condition as above
+        self.rbc = rbc       # Right boundary condition as above
+        
+        # Initial condition function h(x)
+        self.ix_expr = ix  # initial condition expression for printing
+        self.ix = np.vectorize(sp.lambdify(x, ix, 'numpy'),
+                               otypes=[np.float32])
+        
+        self.iv_expr = iv  # initial condition expression for printing
+        self.iv = np.vectorize(sp.lambdify(x, iv, 'numpy'),
+                               otypes=[np.float32])       
+        
+        # Source function f(x)
+        self.source_expr = source # source expression for printing
+        self.source = np.vectorize(sp.lambdify((x, t), source, 'numpy'),
+                                   otypes=[np.float32])  
+        
+
+    def boundarytype(self, mx):
+        return 1, mx
+    
+    def pprint(self, title=''):
+        """Print the diffusion problem with latex"""
+        print(title)
+        u = sp.Function('u')
+        x, t = sp.symbols('x t')
+        display(sp.Eq(u(x,t).diff(t, 2),
+                      c**2*u(x,t).diff(x,2) + self.source_expr))
+        self.lbc.pprint()
+        self.rbc.pprint()
+        display(sp.Eq(u(x,0), self.ix_expr))
+        display(sp.Eq(u(x,t).diff(x).subs(t,0), self.iv_expr))
+        
+    def solve_at_T(self, T, mx, mt, scheme, full_output=False):
+        """Solve the diffusion problem forward to time T using the given
+        scheme."""
         xs = np.linspace(0, self.L, mx+1)     # mesh points in space
         ts = np.linspace(0, T, mt+1)     # mesh points in time
         deltax = xs[1] - xs[0]            # gridspacing in x
         deltat = ts[1] - ts[0]            # gridspacing in t
-        lmbda = self.kappa*deltat/(deltax**2)    # mesh fourier number
+        lmbda = self.c*deltat/deltax    # squared Courant number
+    
+        if full_output:
+            print("deltax =",deltax)
+            print("deltat =",deltat)
+            print("lambda =",lmbda)
+    
+        # initialise explicit solver
+        A_EW = tridiag(mx,0,0,0,0, 2-2*lmbda**2, lmbda**2, lmbda**2)
 
-        u_j = self.ic(xs)
-        u_jp1 = np.zeros(xs.size)
+        # set initial condition
+        u_jm1 = self.ix(xs) 
         
-        # Get matrices and vector for the particular scheme
-        A, B, v = scheme(mx,
-                         deltax,
-                         deltat,
-                         lmbda,
-                         self.lbc.apply_rhs,
-                         self.rbc.apply_rhs)
+        # first time step
+        u_j = np.zeros(xs.size)
+        u_j[1:-1] = 0.5*A_EW[1:-1,1:-1].dot(u_jm1[1:-1]) + deltat*self.iv(xs)[1:-1]
+        u_j[0] = 0; u_j[mx] = 0  # boundary condition     
         
-        a, b = self.boundarytype(mx)
+        # u at next time step
+        u_jp1 = np.zeros(xs.size)        
         
-        for n in range(1, mt+1):
-            # Solve matrix equation A*u_{j+1} = B*u_j + v
-            u_jp1[a:b] = spsolve(A[a:b,a:b],
-                                 B[a:b,a:b].dot(u_j[a:b]) + v(n*deltat)[a:b])
+        for n in range(2,mt+1):
+            u_jp1[1:-1] = A_EW[1:-1,1:-1].dot(u_j[1:-1]) - u_jm1[1:-1]
             
-            # add source to inner terms
-            u_jp1[1:-1] += deltat*self.source(xs[1:-1], n*deltat)
+            # boundary conditions
+            u_jp1[0] = 0; u_jp1[mx] = 0
             
-            # fix Dirichlet boundary conditions
-            if a == 1:
-                u_jp1[0] = self.lbc.apply_rhs(n*deltat)
-            if b == mx:
-                u_jp1[-1] = self.rbc.apply_rhs(n*deltat)
-            
-            u_j[:] = u_jp1[:]
+            # update u_jm1 and u_j
+            u_jm1[:],u_j[:] = u_j[:],u_jp1[:]
         
         return xs, u_j
     
-    def solve_at_T(self, T, mx, mt, scheme):
-        return solve_diffusion_pde(mx, mt, self.L, T,
-                                   self.kappa, self.source, self.ic,
-                                   self.lbc.apply_rhs, self.rbc.apply_rhs,
-                                   self.boundarytype(mx),
-                                   scheme)
-
-    def solve_diffusion_problem(self, t_range, mx, mt, scheme):
-        """Solve the diffusion problem for a range of times"""
-        pass
+    def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
+        xs, uT = solve_wave_pde(mx, mt, self.L, T,
+                                self.c, self.source, self.ix, self.iv,
+                                self.lbc.apply_rhs, self.rbc.apply_rhs,
+                                self.boundarytype(mx),
+                                scheme)
         
-    
-    def plot_at_T(self,
-                  T,
-                  mx=100,
-                  mt=1000,
-                  scheme=backwardeuler,
-                  u_exact=None,
-                  title=''):
-        """Plot the solution to the diffusion problem at time T.
-        If the exact solution is known, plot that too and return the 
-        error at time T."""
-        xs, uT = self.solve_to(T, mx, mt, scheme)
-        try:
-            pl.plot(xs,uT,'ro',label='numerical')
-        except:
-            pass
-            
         if u_exact:
-            xx = np.linspace(0, self.L, 250)
-            uTsym = u_exact.subs({kappa: self.kappa,
+            uTsym = u_exact.subs({c: self.c,
                                   L: self.L,
                                   t: T})
             u = sp.lambdify(x, uTsym)
-            pl.plot(xx, u(xx),'b-',label=r'${}$'.format(sp.latex(uTsym)))
-            error = np.linalg.norm(abs(u(xs) - uT))
-
-        pl.xlabel('x')
-        pl.ylabel('u(x,{})'.format(T))
-        pl.title(title)
-        pl.legend(loc='best')
-        pl.show()
-        
-        if u_exact:
-            return error
-    
-    def plot_at_T(self,
-                  T,
-                  mx=100,
-                  mt=1000,
-                  scheme=backwardeuler,
-                  u_exact=None,
-                  title=''):
-        
-        xs, uT = self.solve_at_T(T, mx, mt, scheme)
-        if u_exact:
-            uTsym = u_exact.subs({kappa: self.kappa,
-                                  L: self.L,
-                                  t: T})
-            u = sp.lambdify(x, uTsym)
-            plot_solution(xs, uT, u, title, r'${}$'.format(sp.latex(uTsym)))
+            error = np.linalg.norm(u(xs) - uT)            
+            if plot:       
+                plot_solution(xs, uT, u, title=title, uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
         else:
-            plot_solution(xs, uT)
-
-    def animate(self, t_range, mx, mt):
-        """Animate the solution of the diffusion problem at the given
-        time frames"""
-        pass
-    
-    def error_at_T(self, T, mx, mt, u_exact, scheme):
-        """Return the error (L2 norm) between the solution of the 
-        equation at T and the exact solution"""
-        xs, uT = self.solve_to(T, mx, mt, scheme)
+            error = None
+            if plot:
+                plot_solution(xs, uT, title=title)            
         
-        uTsym = u_exact.subs({kappa: self.kappa,
-                                  L: self.L,
-                                  t: T})
-        u = sp.lambdify(x, uTsym)
-        error = np.linalg.norm(abs(u(xs) - uT))
-        return error
+        return uT, error       

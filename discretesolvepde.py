@@ -66,9 +66,41 @@ def solve_diffusion_pde(mx, mt, L, T,
     
     return xs, u_j
 
-def solve_wave_pde():
+def solve_wave_pde(mx, mt, L, T,
+                   c, source,
+                   ix, iv, lbc, rbc, boundaries,
+                   scheme):
     """Solve a wave equation problem with the given spacing and scheme"""
-    pass
+    xs = np.linspace(0, L, mx+1)     # mesh points in space
+    ts = np.linspace(0, T, mt+1)      # mesh points in time
+    deltax = xs[1] - xs[0]            # gridspacing in x
+    deltat = ts[1] - ts[0]            # gridspacing in t
+    lmbda = c*deltat/deltax      # squared Courant number
+
+    # Get matrices and vector for the particular scheme
+    A, B, v = scheme(mx, deltax, deltat, lmbda, lbc, rbc) 
+
+    # set initial condition
+    u_jm1 = ix(xs) 
+    
+    # first time step
+    u_j = np.zeros(xs.size)
+    u_j[1:-1] = 0.5*A[1:-1,1:-1].dot(u_jm1[1:-1]) + deltat*iv(xs)[1:-1]
+    u_j[0] = 0; u_j[mx] = 0  # boundary condition     
+    
+    # u at next time step
+    u_jp1 = np.zeros(xs.size)        
+    
+    for n in range(2,mt+1):
+        u_jp1[1:-1] = A[1:-1,1:-1].dot(u_j[1:-1]) - u_jm1[1:-1]
+        
+        # boundary conditions
+        u_jp1[0] = 0; u_jp1[mx] = 0
+        
+        # update u_jm1 and u_j
+        u_jm1[:],u_j[:] = u_j[:],u_jp1[:]
+    
+    return xs, u_j
     
 def plot_solution(xs, uT, uexact=None, title='', uexacttitle=''):
     """Plot the solution uT to a PDE problem at time t"""
@@ -92,6 +124,6 @@ def animate_solution(trange):
     """animate the solution to a PDE problem for a range of t values"""
     pass
 
-def error(T, uexact):
+def error(uT, uexact):
     """Calculate the error between a solution value of t and the exact solution"""
-    pass
+    return np.linalg.norm(uT - uexact)
