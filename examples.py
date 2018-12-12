@@ -20,16 +20,16 @@ def example1():
     
     # exact solution
     u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L)
-    err = dp1.plot_at_T(0.5, u_exact=u, title='Example 1')
-    print('error = {:.8f}'.format(err))
+    dp1.plot_at_T(0.5, u_exact=u, title='Example 1')
+
     
     # test of forward euler scheme
     # deltax = 0.1 -> mx = 10
     # deltat 
-    mt = 5*np.logspace(2, 5, 4, dtype=np.int32)
-    print(mt)
-    errors = [dp1.error_at_T(0.5, 10, n, u, scheme=forwardeuler) for n in mt]
-    print(errors)
+    #mt = 5*np.logspace(2, 5, 4, dtype=np.int32)
+    #print(mt)
+    #errors = [dp1.error_at_T(0.5, 10, n, u, scheme=forwardeuler) for n in mt]
+    #print(errors)
     
 def example2():
     # Example 2 (another frequency in the initial condition)
@@ -67,8 +67,7 @@ def example5():
     dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
-    err = dp5.plot_at_T(1, u_exact=u_first, title='Example 5')
-    print(err)
+    dp5.plot_at_T(1, u_exact=u_first, title='Example 5')
 
 def example6():
     # Example 6 (constant source)
@@ -95,13 +94,13 @@ def example8():
     dp8.pprint('Diffusion Problem 8')
     
     u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
-    err = dp8.plot_at_T(0.1, u_exact=u)
-    print(err)
+    dp8.plot_at_T(0.1, u_exact=u)
+
     
 example1()    
-#example2()
-#example3()
-#example4()
+example2()
+example3()
+example4()
 #example5()
 #example6()
 #example7()

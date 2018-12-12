@@ -14,6 +14,7 @@ from IPython.display import display
 import matplotlib.pylab as pl
 
 from schemes import backwardeuler, cranknicholson, forwardeuler
+from discretesolvepde import solve_diffusion_pde, plot_solution
 
 class BC:
     """General boundary condition for the diffusion problem of the form
@@ -109,27 +110,6 @@ class DiffusionProblem:
             return 0, mx+1
         else:
             raise Exception('Boundary type not recognised')
-            
-    def solve_to(self, T, mx, mt, scheme, full_output=False):
-        """Solve the diffusion problem forward to time T using the given
-        scheme."""
-        xs = np.linspace(0, self.L, mx+1)     # mesh points in space
-        ts = np.linspace(0, T, mt+1)     # mesh points in time
-        deltax = xs[1] - xs[0]            # gridspacing in x
-        deltat = ts[1] - ts[0]            # gridspacing in t
-        lmbda = self.kappa*deltat/(deltax**2)    # mesh fourier number
-    
-        if full_output:
-            print("deltax =",deltax)
-            print("deltat =",deltat)
-            print("lambda =",lmbda)
-    
-        u0 = self.ic(xs)
-        
-        uT = scheme(T, self.L, mx, mt, lmbda, u0,
-                    self.lbc, self.rbc, self.source)
-        
-        return xs, uT
     
     def solve_to(self, T, mx, mt, scheme):
         xs = np.linspace(0, self.L, mx+1)     # mesh points in space
@@ -169,6 +149,13 @@ class DiffusionProblem:
         
         return xs, u_j
     
+    def solve_at_T(self, T, mx, mt, scheme):
+        return solve_diffusion_pde(mx, mt, self.L, T,
+                                   self.kappa, self.source, self.ic,
+                                   self.lbc.apply_rhs, self.rbc.apply_rhs,
+                                   self.boundarytype(mx),
+                                   scheme)
+
     def solve_diffusion_problem(self, t_range, mx, mt, scheme):
         """Solve the diffusion problem for a range of times"""
         pass
@@ -208,6 +195,24 @@ class DiffusionProblem:
         if u_exact:
             return error
     
+    def plot_at_T(self,
+                  T,
+                  mx=100,
+                  mt=1000,
+                  scheme=backwardeuler,
+                  u_exact=None,
+                  title=''):
+        
+        xs, uT = self.solve_at_T(T, mx, mt, scheme)
+        if u_exact:
+            uTsym = u_exact.subs({kappa: self.kappa,
+                                  L: self.L,
+                                  t: T})
+            u = sp.lambdify(x, uTsym)
+            plot_solution(xs, uT, u, title, r'${}$'.format(sp.latex(uTsym)))
+        else:
+            plot_solution(xs, uT)
+
     def animate(self, t_range, mx, mt):
         """Animate the solution of the diffusion problem at the given
         time frames"""
