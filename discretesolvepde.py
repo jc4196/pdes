@@ -10,10 +10,9 @@ from scipy.sparse.linalg import spsolve
 
 import matplotlib.pylab as pl
 
-def solve_diffusion_pde(mx, mt, L, T, 
+def solve_diffusion_pde(mx, mt, L, T, scheme, 
                         kappa, source,
-                        ic, lbc, rbc, boundaries, 
-                        scheme):
+                        ic, lbc, rbc, boundaries):
     """
     Solve a diffusion type problem with the given spacing and scheme
     
@@ -66,10 +65,9 @@ def solve_diffusion_pde(mx, mt, L, T,
     
     return xs, u_j
 
-def solve_wave_pde(mx, mt, L, T,
+def solve_wave_pde(mx, mt, L, T, scheme,
                    c, source,
-                   ix, iv, lbc, rbc, boundaries,
-                   scheme):
+                   ix, iv, lbc, rbc, boundaries):
     """Solve a wave equation problem with the given spacing and scheme"""
     xs = np.linspace(0, L, mx+1)     # mesh points in space
     ts = np.linspace(0, T, mt+1)      # mesh points in time
@@ -80,12 +78,15 @@ def solve_wave_pde(mx, mt, L, T,
     # Get matrices and vector for the particular scheme
     A, B, v = scheme(mx, deltax, deltat, lmbda, lbc, rbc) 
 
-    # set initial condition
-    u_jm1 = ix(xs) 
+    # initial condition vectors
+    U = ix(xs)
+    V = iv(xs)
     
-    # first time step
+    # set first two time steps
+    u_jm1 = U 
+    
     u_j = np.zeros(xs.size)
-    u_j[1:-1] = 0.5*A[1:-1,1:-1].dot(u_jm1[1:-1]) + deltat*iv(xs)[1:-1]
+    u_j[1:-1] = 0.5*A[1:-1,1:-1].dot(u_jm1[1:-1]) + deltat*V[1:-1]
     u_j[0] = 0; u_j[mx] = 0  # boundary condition     
     
     # u at next time step

@@ -94,7 +94,7 @@ class DiffusionProblem:
         u = sp.Function('u')
         x, t = sp.symbols('x t')
         display(sp.Eq(u(x,t).diff(t),
-                      kappa*u(x,t).diff(x,2) + self.source_expr))
+                      self.kappa*u(x,t).diff(x,2) + self.source_expr))
         self.lbc.pprint()
         self.rbc.pprint()
         display(sp.Eq(u(x,0), self.ic_expr))
@@ -112,11 +112,10 @@ class DiffusionProblem:
             raise Exception('Boundary type not recognised')
     
     def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
-        xs, uT =  solve_diffusion_pde(mx, mt, self.L, T,
+        xs, uT =  solve_diffusion_pde(mx, mt, self.L, T, scheme,
                                       self.kappa, self.source, self.ic,
                                       self.lbc.apply_rhs, self.rbc.apply_rhs,
-                                      self.boundarytype(mx),
-                                      scheme)
+                                      self.boundarytype(mx))
         
         if u_exact:
             uTsym = u_exact.subs({kappa: self.kappa,
@@ -154,15 +153,15 @@ class WaveProblem():
         self.lbc = lbc       # Left boundary condition as above
         self.rbc = rbc       # Right boundary condition as above
         
-        # Initial condition function h(x)
+        # Initial condition functions
         self.ix_expr = ix  # initial condition expression for printing
         self.ix = np.vectorize(sp.lambdify(x, ix, 'numpy'),
-                               otypes=[np.float32])
+                                   otypes=[np.float32])
         
-        self.iv_expr = iv  # initial condition expression for printing
+        self.iv_expr = iv  
         self.iv = np.vectorize(sp.lambdify(x, iv, 'numpy'),
-                               otypes=[np.float32])       
-        
+                                   otypes=[np.float32])       
+
         # Source function f(x)
         self.source_expr = source # source expression for printing
         self.source = np.vectorize(sp.lambdify((x, t), source, 'numpy'),
@@ -178,7 +177,7 @@ class WaveProblem():
         u = sp.Function('u')
         x, t = sp.symbols('x t')
         display(sp.Eq(u(x,t).diff(t, 2),
-                      c**2*u(x,t).diff(x,2) + self.source_expr))
+                      self.c**2*u(x,t).diff(x,2) + self.source_expr))
         self.lbc.pprint()
         self.rbc.pprint()
         display(sp.Eq(u(x,0), self.ix_expr))
@@ -224,11 +223,10 @@ class WaveProblem():
         return xs, u_j
     
     def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
-        xs, uT = solve_wave_pde(mx, mt, self.L, T,
+        xs, uT = solve_wave_pde(mx, mt, self.L, T, scheme,
                                 self.c, self.source, self.ix, self.iv,
                                 self.lbc.apply_rhs, self.rbc.apply_rhs,
-                                self.boundarytype(mx),
-                                scheme)
+                                self.boundarytype(mx))
         
         if u_exact:
             uTsym = u_exact.subs({c: self.c,

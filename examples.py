@@ -10,8 +10,10 @@ from schemes import *
 from discretesolvepde import error
 
 from sympy import *
-from sympy.abc import x, t, L, kappa
+from sympy.abc import x, t, L, kappa, c
 import numpy as np
+
+from IPython.display import display
 
 init_printing()
 
@@ -104,9 +106,25 @@ def example8():
 def example9():
     dp9 = WaveProblem()
     #dp9.pprint()
-    dp9.solve_at_T(2, 50, 100, explicitwave, title='Wave Example 1')
+    
+    u= cos(pi*t)*sin(pi*x)
+    uT, error = dp9.solve_at_T(2, 50, 100, explicitwave,
+                               u_exact=u, title='Wave Example 1')
+    print('Error = {}'.format(error))
+    
+def example10():
+    A = 1
+    
+    dp10 = WaveProblem(ix=0, iv=A*sin(pi*x))
+    
+    u = (A*L/(pi*c))*sin(pi*c*t/L)*sin(pi*x/L)
 
-example1()    
+    
+    uT, error = dp10.solve_at_T(1.5, 50, 100, explicitwave,
+                                u_exact=u, title="Wave Problem 2")
+    print('Error = {}'.format(error))
+    
+#example1()    
 #example2()
 #example3()
 #example4()
@@ -114,4 +132,5 @@ example1()
 #example6()
 #example7()
 #example8()
-example9()
+#example9()
+example10()
