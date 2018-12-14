@@ -19,7 +19,7 @@ init_printing()
 
 mx = 50
 mt = 1000
-scheme = cranknicholson
+scheme = forwardeuler
 
 def example1():
     # Example 1 (These options are the defaults)
@@ -123,7 +123,14 @@ def example10():
     uT, error = dp10.solve_at_T(1.5, 50, 100, explicitwave,
                                 u_exact=u, title="Wave Problem 2")
     print('Error = {}'.format(error))
+   
+def example11():
+    A = 1
+    dp11 = WaveProblem(lbc=Neumann(0,0), rbc=Neumann(1,0))
     
+    u = A*cos(pi*c*t/L)*cos(pi*x/L)
+    
+    uT, error = dp11.solve_at_T(2, 50, 100, explicitwave, u_exact=u, title='Wave Problem 3')
 #example1()    
 #example2()
 #example3()
@@ -133,4 +140,5 @@ def example10():
 #example7()
 #example8()
 #example9()
-example10()
+#example10()
+example11()

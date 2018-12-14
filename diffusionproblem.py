@@ -47,10 +47,16 @@ class BC:
 class Dirichlet(BC):
     def __init__(self, xb, rhs):
         BC.__init__(self, xb, (1, 0, rhs))
+    
+    def get_type(self):
+        return 'Dirichlet'
 
 class Neumann(BC):
     def __init__(self, xb, rhs):
         BC.__init__(self, xb, (0, 1, rhs))
+        
+    def get_type(self):
+        return 'Neumann'
         
 
 
@@ -101,13 +107,13 @@ class DiffusionProblem:
     
     def boundarytype(self, mx):
         if self.lbc.isDirichlet() and self.rbc.isDirichlet():
-            return 1, mx
+            return 'D', 'D'
         elif self.lbc.isDirichlet() and self.rbc.isNeumann():
-            return 1, mx+1
+            return 'D', 'N'
         elif self.lbc.isDirichlet() and self.rbc.isNeumann():
-            return 0, mx
+            return 'D', 'N'
         elif self.lbc.isNeumann() and self.rbc.isNeumann():
-            return 0, mx+1
+            return 'N', 'N'
         else:
             raise Exception('Boundary type not recognised')
     
@@ -226,7 +232,7 @@ class WaveProblem():
         xs, uT = solve_wave_pde(mx, mt, self.L, T, scheme,
                                 self.c, self.source, self.ix, self.iv,
                                 self.lbc.apply_rhs, self.rbc.apply_rhs,
-                                self.boundarytype(mx))
+                                self.lbc.get_type(), self.rbc.get_type())
         
         if u_exact:
             uTsym = u_exact.subs({c: self.c,

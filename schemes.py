@@ -29,20 +29,50 @@ def tridiag(N, A00, A01, ANm1N, ANN, m, l, u):
                         shape = (N+1, N+1),
                         format='csr')
 
-def forwardeuler(mx, deltax, deltat, lmbda, p, q):
-    # create forward Euler matrix
+    
+    
+def forwardeuler(mx, deltax, deltat, lmbda, p, q, boundaries):  
     A = sparse.identity(mx+1, format='csr')
     
+    # create forward Euler matrix
+    B = tridiag(mx, 
+                1-2*lmbda, 2*lmbda, 2*lmbda, 1-2*lmbda,
+                1-2*lmbda, lmbda, lmbda)
+    
+    lbctype, rbctype = boundaries
+    
+    if lbctype == 'D':
+        left = [0, lmbda*p(t)]
+    elif lbctype == 'N':
+        left = [-2*lmbda*deltax*p(t), 0]
+    else:
+        raise Exception('boundary type not implemented for forward Euler')
+        
+    if rbctype == 'D':
+        right = [lmbda*q(t), 0]
+    elif rbctype == 'N':
+        right = [0, 2*lmbda*deltax*q(t)]
+    else:
+        raise Exception('boundary type not implemented for forward Euler')
+        
+    def v(t):
+        return np.concatenate((left, np.zeros(mx-3), right))
+    
+    return A, B, v
+
+def forwardeuler(mx, deltax, deltat, lmbda, p, q):  
+    A = sparse.identity(mx+1, format='csr')
+    
+    # create forward Euler matrix
     B = tridiag(mx, 
                 1-2*lmbda, 2*lmbda, 2*lmbda, 1-2*lmbda,
                 1-2*lmbda, lmbda, lmbda)
     
     def v(t):
-        return np.concatenate(([-2*lmbda*deltax*p(t), lmbda*p(t)],
-                               np.zeros(mx-3),
-                               [lmbda*q(t), 2*lmbda*deltax*q(t)]))
+        return [-2*lmbda*deltax*p(t), lmbda*p(t),
+                lmbda*q(t), 2*lmbda*deltax*q(t)]
+        
     return A, B, v
-    
 
 def backwardeuler(mx, deltax, deltat, lmbda, p, q):
     # create backward Euler matrix

@@ -6,9 +6,46 @@ Created on Wed Dec 12 16:36:50 2018
 """
 
 import numpy as np
+from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
 import matplotlib.pylab as pl
+
+def tridiag(N, A00, A01, ANm1N, ANN, l, m, u):
+    """
+    Construct a sparse tridiagonal matrix of the form
+    
+    A00 A01 0 .....       0
+    l   m   u  0..
+    0   l   m   u
+    ...       .
+    ....        .
+    ......    l    m      u
+    ...            ANm1N  ANN
+    
+    """
+    lower = (N-1)*[l] + [ANm1N]
+    main = [A00] + (N-1)*[m] + [ANN]
+    upper = [A01] + (N-1)*[u]
+    
+    return sparse.diags(diagonals = [lower, main, upper],
+                        offsets = [-1, 0, 1],
+                        shape = (N+1, N+1),
+                        format='csr')
+
+def tridiag(N, lower, main, upper):
+    return sparse.diags([lower,main,upper],
+                        offsets=[-1,0,1],
+                        shape=(N+1,N+1),
+                        format='csr')
+
+def matrix_indices(boundaries, mx):
+    l, r = boundaries
+    
+    a = 1 if l == 'D' else 0
+    b = mx if r == 'D' else mx + 1
+    
+    return a, b
 
 def solve_diffusion_pde(mx, mt, L, T, scheme, 
                         kappa, source,
@@ -43,14 +80,21 @@ def solve_diffusion_pde(mx, mt, L, T, scheme,
     u_jp1 = np.zeros(xs.size)
     
     # Get matrices and vector for the particular scheme
-    A, B, v = scheme(mx, deltax, deltat, lmbda, lbc, rbc)
+    A, B, boundary_fns = scheme(mx, deltax, deltat, lmbda, lbc, rbc)
         
-    a, b = boundaries
-        
+    a, b = matrix_indices(boundaries, mx)
+    l, r = boundaries
+
+    
     for n in range(1, mt+1):
         # Solve matrix equation A*u_{j+1} = B*u_j + v
+        
+        v = np.zeros(b-a)
+        v[0] = boundary_fns(n*deltat)[0] if l == 'N' else boundary_fns(n*deltat)[1]
+        v[-1] = boundary_fns(n*deltat)[2] if r == 'D' else boundary_fns(n*deltat)[3]
+    
         u_jp1[a:b] = spsolve(A[a:b,a:b],
-                             B[a:b,a:b].dot(u_j[a:b]) + v(n*deltat)[a:b])
+                             B[a:b,a:b].dot(u_j[a:b]) + v)
         
         # add source to inner terms
         u_jp1[1:-1] += deltat*source(xs[1:-1], n*deltat)
@@ -65,9 +109,19 @@ def solve_diffusion_pde(mx, mt, L, T, scheme,
     
     return xs, u_j
 
+def matrix_rows(mx, lbctype, rbctype):
+    a, b = 0, mx+1
+    
+    if lbctype == 'Dirichlet':
+        a = 1
+    if rbctype == 'Dirichlet':
+        b = mx
+        
+    return a, b
+    
 def solve_wave_pde(mx, mt, L, T, scheme,
                    c, source,
-                   ix, iv, lbc, rbc, boundaries):
+                   ix, iv, lbc, rbc, lbctype, rbctype):
     """Solve a wave equation problem with the given spacing and scheme"""
     xs = np.linspace(0, L, mx+1)     # mesh points in space
     ts = np.linspace(0, T, mt+1)      # mesh points in time
@@ -76,8 +130,12 @@ def solve_wave_pde(mx, mt, L, T, scheme,
     lmbda = c*deltat/deltax      # squared Courant number
 
     # Get matrices and vector for the particular scheme
-    A, B, v = scheme(mx, deltax, deltat, lmbda, lbc, rbc) 
-
+    A = tridiag(mx, lmbda**2, 2-2*lmbda**2, lmbda**2)
+    A[0,1] *= 2; A[-1,-2] *= 2
+    print(A.todense())
+    
+    a, b = matrix_rows(mx, lbctype, rbctype)
+    print(a,b)
     # initial condition vectors
     U = ix(xs)
     V = iv(xs)
@@ -93,13 +151,13 @@ def solve_wave_pde(mx, mt, L, T, scheme,
     u_jp1 = np.zeros(xs.size)        
     
     for n in range(2,mt+1):
-        u_jp1[1:-1] = A[1:-1,1:-1].dot(u_j[1:-1]) - u_jm1[1:-1]
+        u_jp1[a:b] = A[a:b,a:b].dot(u_j[a:b]) - u_jm1[a:b]
         
         # boundary conditions
         u_jp1[0] = 0; u_jp1[mx] = 0
         
         # update u_jm1 and u_j
-        u_jm1[:],u_j[:] = u_j[:],u_jp1[:]
+        u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
     
     return xs, u_j
     
