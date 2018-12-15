@@ -125,12 +125,26 @@ def example10():
     print('Error = {}'.format(error))
    
 def example11():
+    # Wave equation problem with homogeneous Neumann boundary conditions
     A = 1
-    dp11 = WaveProblem(lbc=Neumann(0,0), rbc=Neumann(1,0))
+    wp11 = WaveProblem(ix=A*cos(pi*x), iv=0, lbc=Neumann(0,0), rbc=Neumann(1,0))
     
     u = A*cos(pi*c*t/L)*cos(pi*x/L)
     
-    uT, error = dp11.solve_at_T(2, 50, 100, explicitwave, u_exact=u, title='Wave Problem 3')
+    uT, error = wp11.solve_at_T(2, 50, 100, explicitwave, u_exact=u, title='Wave Problem 3')
+    print('Error = {}'.format(error))
+    
+def example12():
+    # Wave equation with homogeneous Neumann boundary conditions
+    A = 1
+    wp12 = WaveProblem(ix=0, iv=A*cos(pi*x), lbc=Neumann(0,0), rbc=Neumann(0,0))
+    
+    u = A*L/(pi*c)*sin(pi*c*t/L)*cos(pi*x/L)
+    
+    uT, error = wp12.solve_at_T(1.5, 50, 100, explicitwave, u_exact=u, title='Wave Problem 4')
+    print('Error = {}'.format(error))
+    
+    
 #example1()    
 #example2()
 #example3()
@@ -142,3 +156,4 @@ def example11():
 #example9()
 #example10()
 example11()
+example12()

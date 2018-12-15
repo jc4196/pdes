@@ -135,7 +135,7 @@ def solve_wave_pde(mx, mt, L, T, scheme,
     print(A.todense())
     
     a, b = matrix_rows(mx, lbctype, rbctype)
-    print(a,b)
+    print(lbctype, rbctype,b)
     # initial condition vectors
     U = ix(xs)
     V = iv(xs)
@@ -144,8 +144,15 @@ def solve_wave_pde(mx, mt, L, T, scheme,
     u_jm1 = U 
     
     u_j = np.zeros(xs.size)
-    u_j[1:-1] = 0.5*A[1:-1,1:-1].dot(u_jm1[1:-1]) + deltat*V[1:-1]
-    u_j[0] = 0; u_j[mx] = 0  # boundary condition     
+    u_j[a:b] = 0.5*A[a:b,a:b].dot(u_jm1[a:b]) + deltat*V[a:b]
+    
+    # boundary conditions
+    
+    if lbctype == 'Dirichlet':
+        u_j[0] = 0
+        
+    if rbctype == 'Dirichlet':
+        u_j[mx] = 0     
     
     # u at next time step
     u_jp1 = np.zeros(xs.size)        
@@ -154,7 +161,15 @@ def solve_wave_pde(mx, mt, L, T, scheme,
         u_jp1[a:b] = A[a:b,a:b].dot(u_j[a:b]) - u_jm1[a:b]
         
         # boundary conditions
-        u_jp1[0] = 0; u_jp1[mx] = 0
+        if lbctype == 'Neumann':
+            u_jp1[0] += -2*lmbda**2*deltax*lbc(n*deltat)
+        else:
+            u_jp1[0] = 0
+            
+        if rbctype == 'Neumann':
+            u_jp1[mx] += 2*lmbda**2*deltax*rbc(n*deltat)
+        else:
+            u_jp1[mx] = 0
         
         # update u_jm1 and u_j
         u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
