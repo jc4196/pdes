@@ -13,8 +13,9 @@ from scipy.sparse.linalg import spsolve
 from IPython.display import display
 import matplotlib.pylab as pl
 
-from schemes import backwardeuler, cranknicholson, forwardeuler
-from discretesolvepde import *
+from parabolicsolvers import forwardeuler
+from visualizations import plot_solution
+
 
 class BC:
     """General boundary condition for the diffusion problem of the form
@@ -118,10 +119,10 @@ class DiffusionProblem:
             raise Exception('Boundary type not recognised')
     
     def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
-        xs, uT =  solve_diffusion_pde(mx, mt, self.L, T, scheme,
-                                      self.kappa, self.source, self.ic,
-                                      self.lbc.apply_rhs, self.rbc.apply_rhs,
-                                      self.boundarytype(mx))
+        xs, uT =  scheme(mx, mt, self.L, T,
+                         self.kappa, self.source, self.ic,
+                         self.lbc.apply_rhs, self.rbc.apply_rhs,
+                         self.lbc.get_type(), self.rbc.get_type())
         
         if u_exact:
             uTsym = u_exact.subs({kappa: self.kappa,

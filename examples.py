@@ -6,8 +6,7 @@ Created on Fri Nov 30 21:34:47 2018
 """
 
 from diffusionproblem import DiffusionProblem, WaveProblem, Dirichlet, Neumann
-from schemes import *
-from discretesolvepde import error
+from parabolicsolvers import forwardeuler
 
 from sympy import *
 from sympy.abc import x, t, L, kappa, c
@@ -17,18 +16,18 @@ from IPython.display import display
 
 init_printing()
 
-mx = 50
+mx = 10
 mt = 1000
 scheme = forwardeuler
 
 def example1():
     # Example 1 (These options are the defaults)
     dp1 = DiffusionProblem()
-    dp1.pprint('Diffusion Example 1')
+    #dp1.pprint('Diffusion Example 1')
     
     # exact solution
     u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L)
-    uT, err = dp1.solve_at_T(0.5, mx, mt, scheme, u_exact=u,plot=False, title='Example 1')
+    uT, err = dp1.solve_at_T(0.5, mx, mt, scheme, u_exact=u, title='Example 1')
     print('{:.5f}'.format(err))
     # test of forward euler scheme
     # deltax = 0.1 -> mx = 10
@@ -151,6 +150,7 @@ def example13():
     uT, error = wp13.solve_at_T(1.4, 50, 1000, explicitwave, title='Wave Problem 4')
     
 def example14():
+    # non-homogeneous Dirichlet boundary conditions
     wp14 = WaveProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(2, 50, 1000, explicitwave, title='Wave Problem 4')
     
@@ -158,7 +158,7 @@ def example14():
 #example2()
 #example3()
 #example4()
-#example5()
+example5()
 #example6()
 #example7()
 #example8()
@@ -167,4 +167,4 @@ def example14():
 #example11()
 #example12()
 #example13()
-example14()
+#example14()
