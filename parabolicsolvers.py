@@ -104,7 +104,7 @@ def forwardeuler(mx, mt, L, T,
     a, b = matrixrowrange(mx, lbctype, rbctype)
 
     # Solve the PDE at each time step
-    for t in ts[1:]:
+    for t in ts[:-1]:
         u_jp1[a:b] = A_FE[a:b,a:b].dot(u_j[a:b])
         
         addboundaries(u_jp1, lbctype, rbctype,
@@ -115,9 +115,9 @@ def forwardeuler(mx, mt, L, T,
 
         # fix Dirichlet boundary conditions
         if lbctype == 'Dirichlet':
-            u_jp1[0] = lbc(t)
+            u_jp1[0] = lbc(t + deltat)
         if rbctype == 'Dirichlet':
-            u_jp1[mx] = rbc(t)
+            u_jp1[mx] = rbc(t + deltat)
         
         # add source to inner terms
         u_jp1[1:-1] += deltat*source(xs[1:-1], t)
@@ -156,23 +156,23 @@ def backwardeuler(mx, mt, L, T,
     a, b = matrixrowrange(mx, lbctype, rbctype)
 
     # Solve the PDE at each time step
-    for t in ts[1:]:
+    for t in ts[:-1]:
         addboundaries(u_j, lbctype, rbctype,
-                      lmbda*lbc(t+deltat),
-                      lmbda*rbc(t+deltat),
-                      -2*lmbda*deltax*lbc(t+deltat),
-                      2*lmbda*deltax*rbc(t+delta))
+                      lmbda*lbc(t + deltat),
+                      lmbda*rbc(t + deltat),
+                      -2*lmbda*deltax*lbc(t + deltat),
+                      2*lmbda*deltax*rbc(t + deltat))
 
         u_jp1[a:b] = spsolve(B_FE[a:b,a:b], u_j[a:b])
         
         # fix Dirichlet boundary conditions
         if lbctype == 'Dirichlet':
-            u_jp1[0] = lbc(t)
+            u_jp1[0] = lbc(t + deltat)
         if rbctype == 'Dirichlet':
-            u_jp1[mx] = rbc(t)
+            u_jp1[mx] = rbc(t + deltat)
         
         # add source to inner terms
-        u_jp1[1:-1] += deltat*source(xs[1:-1], t)
+        u_jp1[1:-1] += deltat*source(xs[1:-1], t + deltat)
         
         u_j[:] = u_jp1[:]
     
@@ -208,7 +208,7 @@ def cranknicholson(mx, mt, L, T,
     a, b = matrixrowrange(mx, lbctype, rbctype)
 
     # Solve the PDE at each time step
-    for t in ts[1:]:
+    for t in ts[:-1]:
         v[a:b] = B_CN[a:b,a:b].dot(u_j[a:b])
         
         addboundaries(v, lbctype, rbctype,
@@ -226,7 +226,7 @@ def cranknicholson(mx, mt, L, T,
             u_jp1[mx] = rbc(t)
         
         # add source to inner terms
-        u_jp1[1:-1] += deltat*source(xs[1:-1], t)
+        u_jp1[1:-1] += 0.5*deltat*(source(xs[1:-1], t) + source(xs[1:-1], t + deltat))
         
         u_j[:] = u_jp1[:]
     
