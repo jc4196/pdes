@@ -6,7 +6,7 @@ Created on Fri Nov 30 21:34:47 2018
 """
 
 from diffusionproblem import DiffusionProblem, WaveProblem, Dirichlet, Neumann
-from parabolicsolvers import forwardeuler
+from parabolicsolvers import forwardeuler, backwardeuler
 
 from sympy import *
 from sympy.abc import x, t, L, kappa, c
@@ -16,7 +16,7 @@ from IPython.display import display
 
 init_printing()
 
-mx = 10
+mx = 20
 mt = 1000
 scheme = forwardeuler
 
@@ -41,7 +41,7 @@ def example2():
     # Example 2 (another frequency in the initial condition)
       
     dp2 = DiffusionProblem(ic=sin(pi*x) + 0.5*sin(3*pi*x))
-    dp2.pprint('Diffusion Example 2')
+    #dp2.pprint('Diffusion Example 2')
     
     # exact solution
     u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L) + \
@@ -53,7 +53,7 @@ def example3():
     # u(1,t) = 1
 
     dp3 = DiffusionProblem(rbc= Dirichlet(1,1))
-    dp3.pprint('Diffusion Example 3')
+    #dp3.pprint('Diffusion Example 3')
     dp3.solve_at_T(0.02, mx, mt, scheme, title='Example 3')
     
     
@@ -61,7 +61,7 @@ def example4():
     # Example 4 (Initial condition)
     
     dp4 = DiffusionProblem(ic=x)
-    dp4.pprint('Diffusion Problem 4')
+    #dp4.pprint('Diffusion Problem 4')
     
     u_first = (2/pi)*exp(-pi**2*t)*sin(pi*x)
     dp4.solve_at_T(0.3, mx, mt, scheme, u_exact=u_first, title='Example 4')
@@ -70,7 +70,7 @@ def example5():
     # Example 5 (Neumann boundary condition)
 
     dp5 = DiffusionProblem(lbc=Neumann(0,0), rbc=Neumann(1,0), ic=x)
-    dp5.pprint('Diffusion Problem 5')
+    #dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
     dp5.solve_at_T(1, mx, mt, scheme, u_exact=u_first, title='Example 5')
@@ -78,7 +78,7 @@ def example5():
 def example6():
     # Example 6 (constant source)
     dp6 = DiffusionProblem(source=1, rbc=Dirichlet(1,1), ic=0)
-    dp6.pprint('Diffusion Problem 6')
+    #dp6.pprint('Diffusion Problem 6')
     
     # steady state
     ss = -0.5*x**2 + 1.5*x
@@ -88,7 +88,7 @@ def example7():
     # Example 6 (source variable in x)
     
     dp7 = DiffusionProblem(source=sin(3*pi*x), ic=sin(pi*x))
-    dp7.pprint('Diffusion Problem 7')
+    #dp7.pprint('Diffusion Problem 7')
     
     u = exp(-(pi**2)*t)*sin(pi*x) + \
             (1/(3*pi)**2)*(1 - exp(-9*pi**2*t))*sin(3*pi*x)
@@ -97,7 +97,7 @@ def example7():
 
 def example8():
     dp8 = DiffusionProblem(ic=4*sin(3*pi*x))
-    dp8.pprint('Diffusion Problem 8')
+    #dp8.pprint('Diffusion Problem 8')
     
     u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
     dp8.solve_at_T(0.1, mx, mt, scheme, u_exact=u)
@@ -154,14 +154,14 @@ def example14():
     wp14 = WaveProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(2, 50, 1000, explicitwave, title='Wave Problem 4')
     
-#example1()    
-#example2()
-#example3()
-#example4()
+example1()    
+example2()
+example3()
+example4()
 example5()
-#example6()
-#example7()
-#example8()
+example6()
+example7()
+example8()
 #example9()
 #example10()
 #example11()
