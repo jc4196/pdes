@@ -196,6 +196,7 @@ def cranknicholson(mx, mt, L, T,
         u_j[mx] = rbc(0)
 
     u_jp1 = np.zeros(xs.size)
+    v = np.zeros(xs.size)  
     
     # Construct Crank-Nicholson matrices
     A_CN = tridiag(mx, -0.5*lmbda, 1+lmbda, -0.5*lmbda)
@@ -203,27 +204,29 @@ def cranknicholson(mx, mt, L, T,
     # modify first and last row for Neumann conditions
     A_CN[0,1] *= 2; A_CN[mx,mx-1] *= 2; B_CN[0,1] *= 2; B_CN[mx,mx-1] *= 2
 
-    # range of rows of B_FE to use
+    # range of rows of matrices to use
     a, b = matrixrowrange(mx, lbctype, rbctype)
 
     # Solve the PDE at each time step
-    for j in ts[1:]:
-        addboundaries(u_j, lbctype, rbctype,
-                      0.5*lmbda*(lbc(j) + lbc(j + deltat)),
-                      0.5*lmbda*(rbc(j) + rbc(j + deltat)),
-                      -lmbda*deltax*(lbc(j) + lbc(j + deltat)),
-                      lmbda*deltax*(rbc(j) + rbc(j + deltat)))
+    for t in ts[1:]:
+        v[a:b] = B_CN[a:b,a:b].dot(u_j[a:b])
+        
+        addboundaries(v, lbctype, rbctype,
+                      0.5*lmbda*(lbc(t) + lbc(t + deltat)),
+                      0.5*lmbda*(rbc(t) + rbc(t + deltat)),
+                      -lmbda*deltax*(lbc(t) + lbc(t + deltat)),
+                      lmbda*deltax*(rbc(t) + rbc(t + deltat)))
 
-        u_jp1[a:b] = spsolve(A_CN[a:b,a:b], B_CN[a:b,a:b].dot(u_j[a:b]))
+        u_jp1[a:b] = spsolve(A_CN[a:b,a:b], v[a:b])
         
         # fix Dirichlet boundary conditions
         if lbctype == 'Dirichlet':
-            u_jp1[0] = lbc(j)
+            u_jp1[0] = lbc(t)
         if rbctype == 'Dirichlet':
-            u_jp1[mx] = rbc(j)
+            u_jp1[mx] = rbc(t)
         
         # add source to inner terms
-        u_jp1[1:-1] += deltat*source(xs[1:-1], j)
+        u_jp1[1:-1] += deltat*source(xs[1:-1], t)
         
         u_j[:] = u_jp1[:]
     

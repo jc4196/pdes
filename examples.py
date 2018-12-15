@@ -16,7 +16,7 @@ from IPython.display import display
 
 init_printing()
 
-mx = 20
+mx = 200
 mt = 1000
 scheme = cranknicholson
 
@@ -82,7 +82,7 @@ def example6():
     
     # steady state
     ss = -0.5*x**2 + 1.5*x
-    dp6.solve_at_T(0.1, mx, mt, scheme, u_exact=ss)
+    dp6.solve_at_T(0.5, mx, mt, scheme, u_exact=ss)
     
 def example7():
     # Example 6 (source variable in x)
