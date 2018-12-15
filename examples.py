@@ -9,14 +9,14 @@ from diffusionproblem import DiffusionProblem, WaveProblem, Dirichlet, Neumann
 from parabolicsolvers import forwardeuler, backwardeuler, cranknicholson
 
 from sympy import *
-from sympy.abc import x, t, L, kappa, c
+from sympy.abc import x, t
 import numpy as np
 
 from IPython.display import display
 
 init_printing()
 
-mx = 200
+mx = 30
 mt = 1000
 scheme = cranknicholson
 
@@ -26,7 +26,7 @@ def example1():
     #dp1.pprint('Diffusion Example 1')
     
     # exact solution
-    u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L)
+    u = exp(-(pi**2)*t)*sin(pi*x)
     uT, err = dp1.solve_at_T(0.5, mx, mt, scheme, u_exact=u, title='Example 1')
     print('{:.5f}'.format(err))
     # test of forward euler scheme
@@ -44,8 +44,8 @@ def example2():
     #dp2.pprint('Diffusion Example 2')
     
     # exact solution
-    u = exp(-kappa*(pi**2/L**2)*t)*sin(pi*x/L) + \
-                0.5*exp(-kappa*9*(pi**2/L**2)*t)*sin(3*pi*x/L) 
+    u = exp(-(pi**2)*t)*sin(pi*x) + \
+                0.5*exp(-9*(pi**2)*t)*sin(3*pi*x) 
     dp2.solve_at_T(0.6, mx, mt, scheme, u_exact=u, title='Example 2')
 
 def example3():
@@ -116,7 +116,7 @@ def example10():
     
     dp10 = WaveProblem(ix=0, iv=A*sin(pi*x))
     
-    u = (A*L/(pi*c))*sin(pi*c*t/L)*sin(pi*x/L)
+    u = (A/pi)*sin(pi*t)*sin(pi*x)
 
     
     uT, error = dp10.solve_at_T(1.5, 50, 100, explicitwave,
@@ -128,7 +128,7 @@ def example11():
     A = 1
     wp11 = WaveProblem(ix=A*cos(pi*x), iv=0, lbc=Neumann(0,0), rbc=Neumann(1,0))
     
-    u = A*cos(pi*c*t/L)*cos(pi*x/L)
+    u = A*cos(pi*t)*cos(pi*x)
     
     uT, error = wp11.solve_at_T(2, 50, 100, explicitwave, u_exact=u, title='Wave Problem 3')
     print('Error = {}'.format(error))
@@ -138,7 +138,7 @@ def example12():
     A = 1
     wp12 = WaveProblem(ix=0, iv=A*cos(pi*x), lbc=Neumann(0,0), rbc=Neumann(0,0))
     
-    u = A*L/(pi*c)*sin(pi*c*t/L)*cos(pi*x/L)
+    u = (A/pi)*sin(pi*t)*cos(pi*x)
     
     uT, error = wp12.solve_at_T(1.5, 50, 100, explicitwave, u_exact=u, title='Wave Problem 4')
     print('Error = {}'.format(error))
@@ -154,17 +154,17 @@ def example14():
     wp14 = WaveProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(2, 50, 1000, explicitwave, title='Wave Problem 4')
     
-#example1()    
-#example2()
-#example3()
-#example4()
-#example5()
+example1()    
+example2()
+example3()
+example4()
+example5()
 example6()
-#example7()
-#example8()
-#example9()
-#example10()
-#example11()
-#example12()
-#example13()
-#example14()
+example7()
+example8()
+example9()
+example10()
+example11()
+example12()
+example13()
+example14()
