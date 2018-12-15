@@ -6,7 +6,7 @@ Created on Fri Nov 30 21:34:47 2018
 """
 
 from diffusionproblem import DiffusionProblem, WaveProblem, Dirichlet, Neumann
-from parabolicsolvers import forwardeuler, backwardeuler
+from parabolicsolvers import forwardeuler, backwardeuler, cranknicholson
 
 from sympy import *
 from sympy.abc import x, t, L, kappa, c
@@ -18,7 +18,7 @@ init_printing()
 
 mx = 20
 mt = 1000
-scheme = forwardeuler
+scheme = cranknicholson
 
 def example1():
     # Example 1 (These options are the defaults)
@@ -82,7 +82,7 @@ def example6():
     
     # steady state
     ss = -0.5*x**2 + 1.5*x
-    dp6.solve_at_T(0.5, mx, mt, scheme, u_exact=ss)
+    dp6.solve_at_T(0.1, mx, mt, scheme, u_exact=ss)
     
 def example7():
     # Example 6 (source variable in x)
@@ -154,14 +154,14 @@ def example14():
     wp14 = WaveProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(2, 50, 1000, explicitwave, title='Wave Problem 4')
     
-example1()    
-example2()
-example3()
-example4()
-example5()
+#example1()    
+#example2()
+#example3()
+#example4()
+#example5()
 example6()
-example7()
-example8()
+#example7()
+#example8()
 #example9()
 #example10()
 #example11()

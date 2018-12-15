@@ -104,23 +104,23 @@ def forwardeuler(mx, mt, L, T,
     a, b = matrixrowrange(mx, lbctype, rbctype)
 
     # Solve the PDE at each time step
-    for j in ts[1:]:
+    for t in ts[1:]:
         u_jp1[a:b] = A_FE[a:b,a:b].dot(u_j[a:b])
         
         addboundaries(u_jp1, lbctype, rbctype,
-                      lmbda*lbc(j),
-                      lmbda*rbc(j),
-                      -2*lmbda*deltax*lbc(j),
-                      2*lmbda*deltax*rbc(j))
+                      lmbda*lbc(t),
+                      lmbda*rbc(t),
+                      -2*lmbda*deltax*lbc(t),
+                      2*lmbda*deltax*rbc(t))
 
         # fix Dirichlet boundary conditions
         if lbctype == 'Dirichlet':
-            u_jp1[0] = lbc(j)
+            u_jp1[0] = lbc(t)
         if rbctype == 'Dirichlet':
-            u_jp1[mx] = rbc(j)
+            u_jp1[mx] = rbc(t)
         
         # add source to inner terms
-        u_jp1[1:-1] += deltat*source(xs[1:-1], j)
+        u_jp1[1:-1] += deltat*source(xs[1:-1], t)
         
         u_j[:] = u_jp1[:]
     
@@ -156,14 +156,65 @@ def backwardeuler(mx, mt, L, T,
     a, b = matrixrowrange(mx, lbctype, rbctype)
 
     # Solve the PDE at each time step
-    for j in ts[1:]:
+    for t in ts[1:]:
         addboundaries(u_j, lbctype, rbctype,
-                      lmbda*lbc(j),
-                      lmbda*rbc(j),
-                      -2*lmbda*deltax*lbc(j),
-                      2*lmbda*deltax*rbc(j))
+                      lmbda*lbc(t+deltat),
+                      lmbda*rbc(t+deltat),
+                      -2*lmbda*deltax*lbc(t+deltat),
+                      2*lmbda*deltax*rbc(t+delta))
 
         u_jp1[a:b] = spsolve(B_FE[a:b,a:b], u_j[a:b])
+        
+        # fix Dirichlet boundary conditions
+        if lbctype == 'Dirichlet':
+            u_jp1[0] = lbc(t)
+        if rbctype == 'Dirichlet':
+            u_jp1[mx] = rbc(t)
+        
+        # add source to inner terms
+        u_jp1[1:-1] += deltat*source(xs[1:-1], t)
+        
+        u_j[:] = u_jp1[:]
+    
+    return xs, u_j
+
+def cranknicholson(mx, mt, L, T, 
+                   kappa, source,
+                   ic, lbc, rbc, lbctype, rbctype):
+    """Backward Euler finite-difference scheme (implicit) for solving 
+    parabolic PDE problems. Unconditionally stable"""
+    
+    # initialise     
+    xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
+
+    u_j = ic(xs)
+    
+    # if boundary conditions don't match initial conditions
+    if lbctype == 'Dirichlet':
+        u_j[0] = lbc(0)
+    if rbctype == 'Dirichlet':
+        u_j[mx] = rbc(0)
+
+    u_jp1 = np.zeros(xs.size)
+    
+    # Construct Crank-Nicholson matrices
+    A_CN = tridiag(mx, -0.5*lmbda, 1+lmbda, -0.5*lmbda)
+    B_CN = tridiag(mx, 0.5*lmbda, 1-lmbda, 0.5*lmbda)
+    # modify first and last row for Neumann conditions
+    A_CN[0,1] *= 2; A_CN[mx,mx-1] *= 2; B_CN[0,1] *= 2; B_CN[mx,mx-1] *= 2
+
+    # range of rows of B_FE to use
+    a, b = matrixrowrange(mx, lbctype, rbctype)
+
+    # Solve the PDE at each time step
+    for j in ts[1:]:
+        addboundaries(u_j, lbctype, rbctype,
+                      0.5*lmbda*(lbc(j) + lbc(j + deltat)),
+                      0.5*lmbda*(rbc(j) + rbc(j + deltat)),
+                      -lmbda*deltax*(lbc(j) + lbc(j + deltat)),
+                      lmbda*deltax*(rbc(j) + rbc(j + deltat)))
+
+        u_jp1[a:b] = spsolve(A_CN[a:b,a:b], B_CN[a:b,a:b].dot(u_j[a:b]))
         
         # fix Dirichlet boundary conditions
         if lbctype == 'Dirichlet':
@@ -177,6 +228,7 @@ def backwardeuler(mx, mt, L, T,
         u_j[:] = u_jp1[:]
     
     return xs, u_j
+
 
 def solve_diffusion_pde(mx, mt, L, T, scheme, 
                         kappa, source,
