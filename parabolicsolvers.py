@@ -46,6 +46,15 @@ def initialise(mx, mt, L, T, kappa):
     
     return xs, ts, deltax, deltat, lmbda
 
+def matrixrowrange(mx, lbctype, rbctype):
+    a, b = 0, mx+1
+    
+    if lbctype == 'Dirichlet':
+        a = 1
+    if rbctype == 'Dirichlet':
+        b = mx
+        
+    return a, b
 
 def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
     """Add Neumann or Dirichlet boundary conditions"""
@@ -63,15 +72,7 @@ def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
     else:
         raise Exception('That boundary condition is not implemented')
 
-def matrixrowrange(mx, lbctype, rbctype):
-    a, b = 0, mx+1
-    
-    if lbctype == 'Dirichlet':
-        a = 1
-    if rbctype == 'Dirichlet':
-        b = mx
-        
-    return a, b
+
 
 def forwardeuler(mx, mt, L, T, 
                  kappa, source,
@@ -95,7 +96,7 @@ def forwardeuler(mx, mt, L, T,
     u_jp1 = np.zeros(xs.size)
     
     # Construct forward Euler matrix
-    A_FE = tridiag(mx, lmbda, 1-2*lmbda, lmbda)
+    A_FE = tridiag(mx+1, lmbda, 1-2*lmbda, lmbda)
     
     # modify first and last row for Neumann conditions
     A_FE[0,1] *= 2; A_FE[mx,mx-1] *= 2
@@ -147,7 +148,7 @@ def backwardeuler(mx, mt, L, T,
     u_jp1 = np.zeros(xs.size)
     
     # Construct forward Euler matrix
-    B_FE = tridiag(mx, -lmbda, 1+2*lmbda, -lmbda)
+    B_FE = tridiag(mx+1, -lmbda, 1+2*lmbda, -lmbda)
     
     # modify first and last row for Neumann conditions
     B_FE[0,1] *= 2; B_FE[mx,mx-1] *= 2
@@ -199,8 +200,8 @@ def cranknicholson(mx, mt, L, T,
     v = np.zeros(xs.size)  
     
     # Construct Crank-Nicholson matrices
-    A_CN = tridiag(mx, -0.5*lmbda, 1+lmbda, -0.5*lmbda)
-    B_CN = tridiag(mx, 0.5*lmbda, 1-lmbda, 0.5*lmbda)
+    A_CN = tridiag(mx+1, -0.5*lmbda, 1+lmbda, -0.5*lmbda)
+    B_CN = tridiag(mx+1, 0.5*lmbda, 1-lmbda, 0.5*lmbda)
     # modify first and last row for Neumann conditions
     A_CN[0,1] *= 2; A_CN[mx,mx-1] *= 2; B_CN[0,1] *= 2; B_CN[mx,mx-1] *= 2
 
