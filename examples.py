@@ -144,6 +144,15 @@ def example12():
     uT, error = wp12.solve_at_T(1.5, 50, 100, explicitwave, u_exact=u, title='Wave Problem 4')
     print('Error = {}'.format(error))
     
+ 
+def example13():
+    wp13 = WaveProblem(ix=sin(pi*x/2), iv=0, lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
+
+    uT, error = wp13.solve_at_T(1.4, 50, 1000, explicitwave, title='Wave Problem 4')
+    
+def example14():
+    wp14 = WaveProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
+    uT, error = wp14.solve_at_T(2, 50, 1000, explicitwave, title='Wave Problem 4')
     
 #example1()    
 #example2()
@@ -155,5 +164,7 @@ def example12():
 #example8()
 #example9()
 #example10()
-example11()
-example12()
+#example11()
+#example12()
+#example13()
+example14()
