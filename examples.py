@@ -150,18 +150,18 @@ def example12():
 def example13():
     wp13 = HyperbolicProblem(ix=sin(pi*x/2), iv=0, lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
 
-    uT, error = wp13.solve_at_T(0.5, mx, mt, scheme, title='Wave Problem 4')
+    uT, error = wp13.solve_at_T(1.1, mx, mt, scheme, title='Wave Problem 4')
     
 def example14():
     # non-homogeneous Dirichlet boundary conditions
     wp14 = HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
-    uT, error = wp14.solve_at_T(2, mx, mt, scheme, title='Wave Problem 4')
+    uT, error = wp14.solve_at_T(0.5, mx, mt, scheme, title='Wave Problem 4')
  
 def example15():
     # travelling wave with open boundaries
-    wp15 = HyperbolicProblem(L=10, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Dirichlet(0, 0), rbc=Open(10, 1))
+    wp15 = HyperbolicProblem(L=10, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Neumann(0, 0), rbc=Open(10, 1))
     #wp15.pprint()
-    uT, error = wp15.solve_at_T(25, mx, mt, scheme, title='Travelling Wave')
+    uT, error = wp15.solve_at_T(17, mx, mt, scheme, title='Travelling Wave')
 
 
 ## Diffusion Equation Problems ##
@@ -182,14 +182,14 @@ scheme = cranknicholson
 ## Wave Equation Problems ##
 
 scheme = implicitsolve
-mx = 800
-mt = 10000
+mx = 200
+mt = 800
 
 #example9()
 #example10()
 #example11()
 #example12()
-#example13()
+example13()
 #example14()
 
-example15()
+#example15()
