@@ -24,9 +24,10 @@ def initialise(mx, mt, L, T, c):
 def matrixrowrange(mx, lbctype, rbctype):
     a, b = 0, mx+1
     
-    if lbctype == 'Dirichlet':
+    if lbctype == 'Dirichlet' or lbctype == 'Open':
         a = 1
-    if rbctype == 'Dirichlet':
+    
+    if rbctype == 'Dirichlet' or lbctype == 'Open':
         b = mx
         
     return a, b
@@ -37,29 +38,43 @@ def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
         u[0] += N0
     elif lbctype == 'Dirichlet':
         u[1] += D1
+    elif lbctype == 'Open':
+        pass
     else:
         raise Exception('That boundary condition is not implemented')
     
     if rbctype == 'Neumann':
         u[-1] += Nmx
-    elif lbctype == 'Dirichlet':
+    elif rbctype == 'Dirichlet':
         u[-2] += Dmxm1
+    elif rbctype == 'Open':
+        pass
     else:
         raise Exception('That boundary condition is not implemented')
 
 
 def explicitsolve(mx, mt, L, T,
                   c, source,
-                  ix, iv, lbc, rbc, lbctype, rbctype):
+                  ix, iv,
+                  lbc, rbc, lbctype, rbctype):
     """Solve a wave equation problem with the given spacing and scheme"""
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, c)
 
     # Construct explicit wave matrix
     A_EW = tridiag(mx+1, lmbda**2, 2-2*lmbda**2, lmbda**2)
-    A_EW[0,1] *= 2; A_EW[-1,-2] *= 2
     
+    ##### Put changes to the matrix into a separate function ######
+    A_EW[0,1] *= 2; A_EW[mx,mx-1] *= 2
+    
+    # This was an attempt to include the open boundary condition in the matrix
+    #if lbctype == 'Open':
+    #    A_EW[0,0] = 1 + lmbda; A_EW[0,1] = -lmbda
+    #if rbctype =='Open':
+    #    A_EW[mx,mx-1] = 1 - lmbda; A_EW[mx,mx] = lmbda
+    
+    ### and perhaps include this ###
     a, b = matrixrowrange(mx, lbctype, rbctype)
-    
+
     # initial condition vectors
     U = ix(xs)
     V = iv(xs)
@@ -71,25 +86,32 @@ def explicitsolve(mx, mt, L, T,
     u_j[a:b] = 0.5*A_EW[a:b,a:b].dot(U[a:b]) + deltat*V[a:b]
     
     # boundary conditions (may not match initial conditions)
-    
+
+    ### separate function for adding Dirichlet conditions ###
     if lbctype == 'Dirichlet':
         u_j[0] = lbc(0)
         
     if rbctype == 'Dirichlet':
         u_j[mx] = rbc(0)     
-    
+ 
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)        
     
     for t in ts[1:-1]:
         u_jp1[a:b] = A_EW[a:b,a:b].dot(u_j[a:b]) - u_jm1[a:b]
 
-        addboundaries(u_jp1, lbctype, rbctype,
-                      lmbda**2*lbc(t - deltat),
-                      lmbda**2*rbc(t - deltat),
-                      -2*lmbda**2*deltax*lbc(t - deltat),
-                      2*lmbda**2*deltax*rbc(t - deltat))
-
+        #addboundaries(u_jp1, lbctype, rbctype,
+        #              lmbda**2*lbc(t - deltat),
+        #                lmbda**2*rbc(t - deltat),
+        #              -2*lmbda**2*deltax*lbc(t - deltat),
+        #              2*lmbda**2*deltax*rbc(t - deltat))
+        print(lbctype, rbctype)
+        # apply open boundary conditions
+        if lbctype == 'Open':
+            u_jp1[0] = (1-lmbda)*u_j[0] + lmbda*u_j[1]
+        if rbctype == 'Open':
+            u_jp1[mx] = lmbda*u_j[mx-1] + (1-lmbda)*u_j[mx]
+        
         # fix Dirichlet boundary conditions
         if lbctype == 'Dirichlet':
             u_jp1[0] = lbc(t + deltat)
@@ -97,7 +119,7 @@ def explicitsolve(mx, mt, L, T,
             u_jp1[mx] = rbc(t + deltat)
         
         # add source to inner terms
-        u_jp1[1:-1] += deltat*source(xs[1:-1], t)
+        #u_jp1[1:-1] += deltat*source(xs[-1:1], t)
         
         # update u_jm1 and u_j
         u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
@@ -106,7 +128,8 @@ def explicitsolve(mx, mt, L, T,
 
 def implicitsolve(mx, mt, L, T,
                   c, source,
-                  ix, iv, lbc, rbc, lbctype, rbctype):
+                  ix, iv,
+                  lbc, rbc, lbctype, rbctype):
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, c)
   
     # Get matrices and vector for the particular scheme
@@ -160,6 +183,10 @@ def implicitsolve(mx, mt, L, T,
         if rbctype == 'Dirichlet':
             u_jp1[mx] = rbc(t + deltat)
         
+        if lbctype == 'Open':
+            u_jp1[0] = (1-lmbda)*u_j[0] + lmbda*u_j[1]
+        if rbctype == 'Open':
+            u_jp1[mx] = lmbda*u_j[mx-1] + (1-lmbda)*u_j[mx]
         # add source to inner terms
         u_jp1[1:-1] += deltat*source(xs[1:-1], t)
         

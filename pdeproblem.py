@@ -59,6 +59,20 @@ class Neumann(BC):
         
     def get_type(self):
         return 'Neumann'
+    
+class Open(BC):
+    def __init__(self, xb, c):
+        self.u = sp.Function('u')
+        self.xb = xb
+        self.c = c
+        self.rhs_fn = lambda t: 0
+    
+    def pprint(self):
+        display(sp.Eq(self.u(x,t).diff(t).subs(x, self.xb)
+                        + c*self.u(x,t).diff(x).subs(x, self.xb), 0))
+        
+    def get_type(self):
+        return 'Open'
         
 
 

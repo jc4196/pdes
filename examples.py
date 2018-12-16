@@ -5,7 +5,7 @@ Created on Fri Nov 30 21:34:47 2018
 @author: james
 """
 
-from pdeproblem import ParabolicProblem, HyperbolicProblem, Dirichlet, Neumann
+from pdeproblem import ParabolicProblem, HyperbolicProblem, Dirichlet, Neumann, Open
 from parabolicsolvers import forwardeuler, backwardeuler, cranknicholson
 from hyperbolicsolvers import explicitsolve, implicitsolve
 
@@ -157,6 +157,15 @@ def example14():
     wp14 = HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(2, mx, mt, scheme, title='Wave Problem 4')
  
+def example15():
+    # travelling wave with open boundaries
+    wp15 = HyperbolicProblem(L=10, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Dirichlet(0, 0), rbc=Open(10, 1))
+    #wp15.pprint()
+    uT, error = wp15.solve_at_T(25, mx, mt, scheme, title='Travelling Wave')
+
+
+## Diffusion Equation Problems ##
+    
 mx = 30
 mt = 1000
 scheme = cranknicholson
@@ -173,15 +182,14 @@ scheme = cranknicholson
 ## Wave Equation Problems ##
 
 scheme = implicitsolve
-mx = 40
-mt = 100
+mx = 800
+mt = 10000
 
-example9()
-example10()
-example11()
-example12()
+#example9()
+#example10()
+#example11()
+#example12()
+#example13()
+#example14()
 
- 
-mt = 1000
-example13()
-example14()
+example15()
