@@ -140,7 +140,15 @@ def explicitsolve(mx, mt, L, T,
     A_EW = tridiag(mx+1, lmbda**2, 2-2*lmbda**2, lmbda**2)
     
     ##### Put changes to the matrix into a separate function ######
-    A_EW[0,1] *= 2; A_EW[mx,mx-1] *= 2
+    if lbctype == 'Neumann':
+        A_EW[0,1] *= 2
+    elif lbctype == 'Open':
+        A_EW[0,0] = 2*(1 + lmbda - lmbda**2); A_EW[0,1] = 2*lmbda**2
+    
+    if rbctype == 'Neumann':
+        A_EW[mx,mx-1] *= 2
+    elif rbctype == 'Open':
+        A_EW[mx,mx-1] = 2*lmbda**2; A_EW[mx,mx] = 2*(1 + lmbda - lmbda**2)
     
     # This was an attempt to include the open boundary condition in the matrix
     #if lbctype == 'Open':
@@ -184,9 +192,11 @@ def explicitsolve(mx, mt, L, T,
 
         # apply open boundary conditions
         if lbctype == 'Open':
-            u_jp1[0] = (1-lmbda)*u_j[0] + lmbda*u_j[1]
+            #u_jp1[0] = (1-lmbda)*u_j[0] + lmbda*u_j[1]
+            u_jp1[0] /= (1+2*lmbda)
         if rbctype == 'Open':
-            u_jp1[mx] = lmbda*u_j[mx-1] + (1-lmbda)*u_j[mx]
+            #u_jp1[mx] = lmbda*u_j[mx-1] + (1-lmbda)*u_j[mx]
+            u_jp1[mx] /= (1+2*lmbda)
         
         # fix Dirichlet boundary conditions
         if lbctype == 'Dirichlet':
