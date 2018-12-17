@@ -39,7 +39,7 @@ def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
     elif lbctype == 'Dirichlet':
         #u[1] += D1
         pass
-    elif lbctype == 'Open':
+    elif lbctype == 'Open' or lbctype == 'Periodic':
         pass
     else:
         raise Exception('That boundary condition is not implemented')
@@ -49,7 +49,7 @@ def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
     elif rbctype == 'Dirichlet':
         #u[-2] += Dmxm1
         pass
-    elif rbctype == 'Open':
+    elif rbctype == 'Open' or rbctype == 'Periodic':
         pass
     else:
         raise Exception('That boundary condition is not implemented')
@@ -142,12 +142,12 @@ def explicitsolve(mx, mt, L, T,
     ##### Put changes to the matrix into a separate function ######
     if lbctype == 'Neumann':
         A_EW[0,1] *= 2
-    elif lbctype == 'Open':
+    elif lbctype == 'Open' or lbctype == 'Periodic':
         A_EW[0,0] = 2*(1 + lmbda - lmbda**2); A_EW[0,1] = 2*lmbda**2
     
     if rbctype == 'Neumann':
         A_EW[mx,mx-1] *= 2
-    elif rbctype == 'Open':
+    elif rbctype == 'Open' or rbctype == 'Periodic':
         A_EW[mx,mx-1] = 2*lmbda**2; A_EW[mx,mx] = 2*(1 + lmbda - lmbda**2)
     
     # This was an attempt to include the open boundary condition in the matrix
@@ -180,6 +180,8 @@ def explicitsolve(mx, mt, L, T,
  
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)        
+   
+    zero_left, zero_right = True, True
     
     for t in ts[1:-1]:
         u_jp1 = A_EW.dot(u_j) - u_jm1
@@ -191,10 +193,10 @@ def explicitsolve(mx, mt, L, T,
                       2*lmbda**2*deltax*rbc(t - deltat))
 
         # apply open boundary conditions
-        if lbctype == 'Open':
+        if lbctype == 'Open' or (lbctype == 'Periodic' and zero_right):
             #u_jp1[0] = (1-lmbda)*u_j[0] + lmbda*u_j[1]
             u_jp1[0] /= (1+2*lmbda)
-        if rbctype == 'Open':
+        if rbctype == 'Open' or (rbctype == 'Periodic' and zero_left):
             #u_jp1[mx] = lmbda*u_j[mx-1] + (1-lmbda)*u_j[mx]
             u_jp1[mx] /= (1+2*lmbda)
         
@@ -204,6 +206,23 @@ def explicitsolve(mx, mt, L, T,
         if rbctype == 'Dirichlet':
             u_jp1[mx] = rbc(t + deltat)
         
+        if zero_left:
+            if u_jp1[0] > 1e-6:
+                zero_left = False
+        
+        if zero_right:            
+            if u_jp1[mx] > 1e-6:
+                zero_right = False
+        
+        if lbctype == 'Periodic':
+            if zero_right == False:
+                u_jp1[0] = u_jp1[mx]
+                print('here')
+                
+        if rbctype == 'Periodic':
+            if zero_left == False:
+                u_jp1[mx] = u_jp1[0]
+                
         # add source to inner terms
         #u_jp1[1:-1] += deltat*source(xs[-1:1], t)
         

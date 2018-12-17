@@ -74,7 +74,17 @@ class Open(BC):
     def get_type(self):
         return 'Open'
         
-
+class Periodic(BC):
+    def __init__(self, x1, x2):
+        self.u = sp.Function('u')
+        self.xb = x1
+        self.rhs_fn = lambda t: 0
+        
+    def pprint(self):
+        display(sp.Eq(self.u(x,t).subs(x, self.x1), self.u(x,t).subs(x,self.x2)))
+        
+    def get_type(self):
+        return 'Periodic'
 
 class ParabolicProblem:
     """Object specifying a diffusion type problem of the form

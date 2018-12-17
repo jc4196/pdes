@@ -5,7 +5,7 @@ Created on Fri Nov 30 21:34:47 2018
 @author: james
 """
 
-from pdeproblem import ParabolicProblem, HyperbolicProblem, Dirichlet, Neumann, Open
+from pdeproblem import ParabolicProblem, HyperbolicProblem, Dirichlet, Neumann, Open, Periodic
 from parabolicsolvers import forwardeuler, backwardeuler, cranknicholson
 from hyperbolicsolvers import explicitsolve, implicitsolve
 
@@ -161,9 +161,15 @@ def example15():
     # travelling wave with open boundaries
     wp15 = HyperbolicProblem(L=10, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Open(0, 1), rbc=Open(10, 1))
     #wp15.pprint()
-    uT, error = wp15.solve_at_T(6.5, mx, mt, scheme, title='Travelling Wave')
+    uT, error = wp15.solve_at_T(6, mx, mt, scheme, title='Travelling Wave')
 
+def example16():
+    # travelling wave with periodic boundary, left wave leaves the domain
+    wp16 = HyperbolicProblem(L=20, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Periodic(0, 20), rbc=Open(20, 1))
+    #wp15.pprint()
+    uT, error = wp16.solve_at_T(6, mx, mt, scheme, title='Travelling Wave')
 
+ 
 ## Diffusion Equation Problems ##
     
 mx = 30
@@ -192,4 +198,7 @@ mt = 800
 #example13()
 #example14()
 
+## travelling waves
+
 example15()
+example16()
