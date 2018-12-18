@@ -14,7 +14,7 @@ from IPython.display import display
 import matplotlib.pylab as pl
 
 from parabolicsolvers import forwardeuler
-
+from hyperbolicsolvers import tsunami_solve
 from visualizations import plot_solution
 
 
@@ -186,6 +186,7 @@ class HyperbolicProblem():
         self.source_expr = source # source expression for printing
         self.source = np.vectorize(sp.lambdify((x, t), source, 'numpy'),
                                    otypes=[np.float32])  
+        
 
     
     def pprint(self, title=''):
@@ -203,7 +204,8 @@ class HyperbolicProblem():
     
     def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
         xs, uT = scheme(mx, mt, self.L, T,
-                        self.c, self.source, self.ix, self.iv,
+                        self.c, self.source,
+                        self.ix, self.iv,
                         self.lbc.apply_rhs, self.rbc.apply_rhs,
                         self.lbc.get_type(), self.rbc.get_type())
         
@@ -220,4 +222,26 @@ class HyperbolicProblem():
             if plot:
                 plot_solution(xs, uT, title=title)            
         
-        return uT, error       
+        return uT, error      
+    
+class TsunamiProblem:
+    def __init__(self,
+                 L=30,
+                 h = 1,
+                 ix= 2 + 0.5*sp.exp(-(x-2.5)**2/0.5),
+                 iv=0):
+        self.L = L
+        self.h = np.vectorize(sp.lambdify(x, h, 'numpy'), otypes=[np.float32])
+        self.ix = sp.lambdify(x, ix, 'numpy')
+        self.iv = np.vectorize(sp.lambdify(x, iv, 'numpy'),
+                               otypes = [np.float32])
+        
+    def solve_at_T(self, T, mx, mt):
+        xs, uT = tsunami_solve(mx, mt, self.L, T, self.h, self.ix, self.iv)
+        
+        plot_solution(xs, uT, style='b-')
+        
+        return uT
+        
+        
+    

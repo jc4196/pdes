@@ -8,10 +8,10 @@ Created on Sat Dec 15 11:15:35 2018
 import numpy as np
 import matplotlib.pyplot as pl
 
-def plot_solution(xs, uT, uexact=None, title='', uexacttitle=''):
+def plot_solution(xs, uT, uexact=None, title='', uexacttitle='', style='ro'):
     """Plot the solution uT to a PDE problem at time t"""
     try:
-        pl.plot(xs,uT,'ro',label='numerical')
+        pl.plot(xs,uT,style,label='numerical')
     except:
         pass
         

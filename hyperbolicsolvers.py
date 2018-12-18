@@ -7,6 +7,7 @@ Created on Sat Dec 15 10:56:19 2018
 
 import numpy as np
 from scipy.sparse.linalg import spsolve
+from scipy import sparse
 
 from helpers import tridiag
 from visualizations import plot_solution
@@ -136,8 +137,9 @@ def explicitsolve(mx, mt, L, T,
     """Solve a wave equation problem with the given spacing"""
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, c)
     print("lambda = %f" % lmbda)
+    
     # Construct explicit wave matrix
-    A_EW = tridiag(mx+1, lmbda**2, 2-2*lmbda**2, lmbda**2)
+    A_EW = tridiag(mx+1, lmbda**2, 2-2*lmbda**2, lmbda**2)    
     
     ##### Put changes to the matrix into a separate function ######
     if lbctype == 'Neumann':
@@ -217,7 +219,6 @@ def explicitsolve(mx, mt, L, T,
         if lbctype == 'Periodic':
             if zero_right == False:
                 u_jp1[0] = u_jp1[mx]
-                print('here')
                 
         if rbctype == 'Periodic':
             if zero_left == False:
@@ -231,7 +232,64 @@ def explicitsolve(mx, mt, L, T,
     
     return xs, u_j
 
+def tsunami_solve(mx, mt, L, T, h, ix, iv):
+    """Variable wavespeed problem assumes periodic boundary on the left and 
+    an open boundary on the right"""
+    xs = np.linspace(0, L, mx+1)     # mesh points in space
+    ts = np.linspace(0, T, mt+1)      # mesh points in time
+    deltax = xs[1] - xs[0]            # gridspacing in x
+    deltat = ts[1] - ts[0]            # gridspacing in t  
+    delta = deltat**2/deltax**2
 
+    # construct explicit wave matrix for variable wave speed problem
+    lower = [delta*h(i - 0.5) for i in range(mx)]
+    main = [2 - delta*(h(i + 0.5) + h(i - 0.5)) for i in range(mx+1)]
+    upper = [delta*h(i + 0.5) for i in range(mx)]
+    A_EW = sparse.diags([lower,main,upper], offsets=[-1,0,1], format='csr')
+    print(A_EW.todense())
+    # open boundary conditions at the start
+    left_lmbda = delta*h(0)
+    right_lmbda = delta*h(mx)
+    
+    A_EW[0,0] = 2*(1 + left_lmbda - left_lmbda**2)
+    A_EW[0,1] = 2*left_lmbda**2
+    A_EW[mx,mx-1] = 2*right_lmbda**2
+    A_EW[mx,mx] = 2*(1 + right_lmbda - right_lmbda**2)
+    
+     # initial condition vectors
+    U = ix(xs)
+    V = iv(xs)
+    
+    # set first two time steps
+    u_jm1 = U 
+
+    u_j = np.zeros(xs.size)
+    u_j = 0.5*A_EW.dot(U) + deltat*V
+    
+    # initialise u at next time step
+    u_jp1 = np.zeros(xs.size)        
+   
+    zero_right = True
+    
+    for t in ts[1:-1]:
+        u_jp1 = A_EW.dot(u_j) - u_jm1
+        
+        if u_jp1[mx] > 1e-6:
+                zero_right = False
+        
+        if zero_right:
+            u_jp1[0] /= (1+2*left_lmbda)
+        else:
+            u_jp1[0] = u_jp1[mx]
+        
+        # update u_jm1 and u_j
+        u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
+    
+    return xs, u_j    
+    
+    
+    
+    
 def implicitsolve(mx, mt, L, T,
                   c, source,
                   ix, iv,
