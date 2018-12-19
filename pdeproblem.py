@@ -227,17 +227,17 @@ class HyperbolicProblem():
 class TsunamiProblem:
     def __init__(self,
                  L=30,
-                 h = 1,
-                 ix= 2 + 0.5*sp.exp(-(x-2.5)**2/0.5),
-                 iv=0):
+                 h0 = 2,
+                 iw = 0.5*sp.exp(-(x-2.5)**2/0.5),
+                 isb = 0.5*sp.exp(-(x-7)**2/0.5)):
         self.L = L
-        self.h = np.vectorize(sp.lambdify(x, h, 'numpy'), otypes=[np.float32])
-        self.ix = sp.lambdify(x, ix, 'numpy')
-        self.iv = np.vectorize(sp.lambdify(x, iv, 'numpy'),
-                               otypes = [np.float32])
+        self.h0 = h0
+        self.h = np.vectorize(sp.lambdify(x, h0 - isb, 'numpy'), otypes=[np.float32])
+        self.iw = sp.lambdify(x, iw, 'numpy')
+
         
     def solve_at_T(self, T, mx, mt):
-        xs, uT = tsunami_solve(mx, mt, self.L, T, self.h, self.ix, self.iv)
+        xs, uT = tsunami_solve(mx, mt, self.L, T, self.h0, self.h, self.iw)
         
         plot_solution(xs, uT, style='b-')
         

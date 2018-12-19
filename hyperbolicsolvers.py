@@ -232,39 +232,38 @@ def explicitsolve(mx, mt, L, T,
     
     return xs, u_j
 
-def tsunami_solve(mx, mt, L, T, h, ix, iv):
+def tsunami_solve(mx, mt, L, T, h0, h, ix):
     """Variable wavespeed problem assumes periodic boundary on the left and 
     an open boundary on the right"""
-    xs = np.linspace(0, L, mx+1)     # mesh points in space
+    xs = np.linspace(0, L, mx+1)      # mesh points in space
     ts = np.linspace(0, T, mt+1)      # mesh points in time
     deltax = xs[1] - xs[0]            # gridspacing in x
     deltat = ts[1] - ts[0]            # gridspacing in t  
-    delta = deltat**2/deltax**2
+    delta = deltat/deltax
+
 
     # construct explicit wave matrix for variable wave speed problem
-    lower = [delta*h(i - 0.5) for i in range(mx)]
-    main = [2 - delta*(h(i + 0.5) + h(i - 0.5)) for i in range(mx+1)]
-    upper = [delta*h(i + 0.5) for i in range(mx)]
+    lower = [delta**2*h(i - 0.5) for i in range(mx)]
+    main = [2 - delta**2*(h(i + 0.5) + h(i - 0.5)) for i in range(mx+1)]
+    upper = [delta**2*h(i + 0.5) for i in range(mx)]
     A_EW = sparse.diags([lower,main,upper], offsets=[-1,0,1], format='csr')
-    print(A_EW.todense())
+
     # open boundary conditions at the start
-    left_lmbda = delta*h(0)
-    right_lmbda = delta*h(mx)
+    lmbda = delta*np.sqrt(h0)
     
-    A_EW[0,0] = 2*(1 + left_lmbda - left_lmbda**2)
-    A_EW[0,1] = 2*left_lmbda**2
-    A_EW[mx,mx-1] = 2*right_lmbda**2
-    A_EW[mx,mx] = 2*(1 + right_lmbda - right_lmbda**2)
+    A_EW[0,0] = 2*(1 + lmbda - lmbda**2)
+    A_EW[0,1] = 2*lmbda**2
+    A_EW[mx,mx-1] = 2*lmbda**2
+    A_EW[mx,mx] = 2*(1 + lmbda - lmbda**2)
     
      # initial condition vectors
     U = ix(xs)
-    V = iv(xs)
     
     # set first two time steps
     u_jm1 = U 
 
     u_j = np.zeros(xs.size)
-    u_j = 0.5*A_EW.dot(U) + deltat*V
+    u_j = 0.5*A_EW.dot(U)
     
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)        
@@ -278,7 +277,7 @@ def tsunami_solve(mx, mt, L, T, h, ix, iv):
                 zero_right = False
         
         if zero_right:
-            u_jp1[0] /= (1+2*left_lmbda)
+            u_jp1[0] /= (1+2*lmbda)
         else:
             u_jp1[0] = u_jp1[mx]
         
@@ -346,12 +345,7 @@ def implicitsolve(mx, mt, L, T,
             u_jp1[0] = lbc(t + deltat)
         if rbctype == 'Dirichlet':
             u_jp1[mx] = rbc(t + deltat)
-        
-        # apply open boundary conditions
-        if lbctype == 'Open':
-            u_jp1[0] = (1-lmbda)*u_j[0] + lmbda*u_j[1]
-        if rbctype == 'Open':
-            u_jp1[mx] = lmbda*u_j[mx-1] + (1-lmbda)*u_j[mx]
+    
             
         # add source to inner terms
         u_jp1[1:-1] += deltat*source(xs[1:-1], t)
