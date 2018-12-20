@@ -228,16 +228,18 @@ class TsunamiProblem:
     def __init__(self,
                  L=30,
                  h0 = 2,
-                 iw = 0.5*sp.exp(-(x-2.5)**2/0.5),
-                 isb = 0.5*sp.exp(-(x-7)**2/0.5)):
+                 wave = 0.5*sp.exp(-(x-2.5)**2/0.5),
+                 seabed = 0.5*sp.exp(-(x-15)**2/0.5)):
+                 #seabed = 0):
         self.L = L
         self.h0 = h0
-        self.h = np.vectorize(sp.lambdify(x, h0 - isb, 'numpy'), otypes=[np.float32])
-        self.iw = sp.lambdify(x, iw, 'numpy')
+        self.h = np.vectorize(sp.lambdify(x, h0 - seabed, 'numpy'),
+                              otypes=[np.float32])
+        self.wave = sp.lambdify(x, wave, 'numpy')
 
         
     def solve_at_T(self, T, mx, mt):
-        xs, uT = tsunami_solve(mx, mt, self.L, T, self.h0, self.h, self.iw)
+        xs, uT = tsunami_solve(mx, mt, self.L, T, self.h0, self.h, self.wave)
         
         plot_solution(xs, uT, style='b-')
         

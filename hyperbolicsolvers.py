@@ -232,7 +232,7 @@ def explicitsolve(mx, mt, L, T,
     
     return xs, u_j
 
-def tsunami_solve(mx, mt, L, T, h0, h, ix):
+def tsunami_solve(mx, mt, L, T, h0, h, wave):
     """Variable wavespeed problem assumes periodic boundary on the left and 
     an open boundary on the right"""
     xs = np.linspace(0, L, mx+1)      # mesh points in space
@@ -250,6 +250,8 @@ def tsunami_solve(mx, mt, L, T, h0, h, ix):
 
     # open boundary conditions at the start
     lmbda = delta*np.sqrt(h0)
+    print('lambda = {}'.format(lmbda))
+    #plot_solution(xs, h(xs))
     
     A_EW[0,0] = 2*(1 + lmbda - lmbda**2)
     A_EW[0,1] = 2*lmbda**2
@@ -257,14 +259,17 @@ def tsunami_solve(mx, mt, L, T, h0, h, ix):
     A_EW[mx,mx] = 2*(1 + lmbda - lmbda**2)
     
      # initial condition vectors
-    U = ix(xs)
+
+    U = wave(xs)
     
     # set first two time steps
     u_jm1 = U 
 
     u_j = np.zeros(xs.size)
     u_j = 0.5*A_EW.dot(U)
-    
+    #u_j[0] /= (1+2*lmbda); u_j[mx] /= (1+2*lmbda)
+    print(u_j)
+    plot_solution(xs, -h(xs))
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)        
    
@@ -273,13 +278,16 @@ def tsunami_solve(mx, mt, L, T, h0, h, ix):
     for t in ts[1:-1]:
         u_jp1 = A_EW.dot(u_j) - u_jm1
         
-        if u_jp1[mx] > 1e-6:
-                zero_right = False
+        u_jp1[mx] /= (1+2*lmbda)
+        
+        if u_jp1[mx] > 1e-5:
+            zero_right = False
         
         if zero_right:
             u_jp1[0] /= (1+2*lmbda)
         else:
             u_jp1[0] = u_jp1[mx]
+        
         
         # update u_jm1 and u_j
         u_jm1[:], u_j[:] = u_j[:], u_jp1[:]

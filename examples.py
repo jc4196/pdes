@@ -173,7 +173,7 @@ def example17():
     # travelling wave with variable seabed
     wp17 = TsunamiProblem()
     
-    uT = wp17.solve_at_T(1.3, 200, 800)
+    uT = wp17.solve_at_T(15, 400, 500)
  
 ## Diffusion Equation Problems ##
     
