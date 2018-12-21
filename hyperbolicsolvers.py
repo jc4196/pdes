@@ -251,9 +251,7 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     upper = [2*lmbda**2] + [delta**2*h(i + 0.5*deltax) for i in xs[1:-1]]
 
     A_EW = sparse.diags([lower,main,upper], offsets=[-1,0,1], format='csr')
-    print(A_EW.todense())
-
-    plot_solution(xs, h(xs))
+    #print(A_EW)
     
      # initial condition vectors
 

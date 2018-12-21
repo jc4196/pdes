@@ -171,15 +171,15 @@ def example16():
 
 def example17():
     # travelling wave with variable seabed
-    L=30
-    h0 = 10
-    wave = 0.5*exp(-(x-5)**2)
-    seabed = 5*exp(-(x-20)**2/0.5)
+    L=40
+    h0 =8
+    wave = 20*exp(-(x-5)**2/3)
+    seabed = 7*exp(-(x-30)**2/20)
     #seabed = 0
     
     wp17 = TsunamiProblem(L, h0, wave, seabed)
     
-    uT = wp17.solve_at_T(6, 40, 80)
+    uT = wp17.solve_at_T(5, 700, 1800)
  
 ## Diffusion Equation Problems ##
     

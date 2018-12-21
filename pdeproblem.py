@@ -228,6 +228,7 @@ class TsunamiProblem:
     def __init__(self, L, h0, wave, seabed):
         self.L = L
         self.h0 = h0
+        self.seabed = np.vectorize(sp.lambdify(x, seabed - h0, 'numpy'))
         self.h = np.vectorize(sp.lambdify(x, h0 - seabed, 'numpy'),
                               otypes=[np.float32])
         self.wave = sp.lambdify(x, wave, 'numpy')
@@ -236,7 +237,7 @@ class TsunamiProblem:
     def solve_at_T(self, T, mx, mt):
         xs, uT = tsunami_solve(mx, mt, self.L, T, self.h0, self.h, self.wave)
         
-        plot_solution(xs, uT, style='b-')
+        plot_solution(xs, uT, uexact=self.seabed , style='r-')
         
         return uT
         
