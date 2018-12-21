@@ -225,12 +225,7 @@ class HyperbolicProblem():
         return uT, error      
     
 class TsunamiProblem:
-    def __init__(self,
-                 L=30,
-                 h0 = 2,
-                 wave = 0.5*sp.exp(-(x-5)**2),
-                 seabed = 0.1*sp.exp(-(x-20)**2/0.5)):
-                 #seabed = 0):
+    def __init__(self, L, h0, wave, seabed):
         self.L = L
         self.h0 = h0
         self.h = np.vectorize(sp.lambdify(x, h0 - seabed, 'numpy'),

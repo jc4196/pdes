@@ -240,26 +240,21 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     deltax = xs[1] - xs[0]            # gridspacing in x
     deltat = ts[1] - ts[0]            # gridspacing in t  
     delta = deltat/deltax
-
-
-    # construct explicit wave matrix for variable wave speed problem
-    lower = [delta**2*h(i - 0.5) for i in range(mx)]
-    main = [2 - delta**2*(h(i + 0.5) + h(i - 0.5)) for i in range(mx+1)]
-    upper = [delta**2*h(i + 0.5) for i in range(mx)]
-    A_EW = sparse.diags([lower,main,upper], offsets=[-1,0,1], format='csr')
-
-    # open boundary conditions at the start
     lmbda = delta*np.sqrt(h0)
     print('lambda = {}'.format(lmbda))
-    #plot_solution(xs, h(xs))
+
+    # construct explicit wave matrix for variable wave speed problem
+    lower = [delta**2*h(i - 0.5*deltax) for i in xs[1:-1]] + [2*lmbda**2]
+    main = [2*(1 + lmbda - lmbda**2)] + \
+            [2 - delta**2*(h(i + 0.5*deltax) + h(i - 0.5*deltax)) for i in xs[1:-1]] + \
+             [2*(1 + lmbda - lmbda**2)]
+    upper = [2*lmbda**2] + [delta**2*h(i + 0.5*deltax) for i in xs[1:-1]]
+
+    A_EW = sparse.diags([lower,main,upper], offsets=[-1,0,1], format='csr')
+    print(A_EW.todense())
+
+    plot_solution(xs, h(xs))
     
-    # open boundary conditions to start
-    A_EW[0,0] = 2*(1 + lmbda - lmbda**2)
-    A_EW[0,1] = 2*lmbda**2
-    A_EW[mx,mx-1] = 2*lmbda**2
-    A_EW[mx,mx] = 2*(1 + lmbda - lmbda**2)
-    
-    #print(A_EW.todense())
      # initial condition vectors
 
     U = wave(xs)
@@ -271,7 +266,7 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     u_j = 0.5*A_EW.dot(U)
     
     u_j[0] /= (1+2*lmbda); u_j[mx] /= (1+2*lmbda)
-    plot_solution(xs, h(xs))
+
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)        
    
