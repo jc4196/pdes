@@ -253,11 +253,13 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     print('lambda = {}'.format(lmbda))
     #plot_solution(xs, h(xs))
     
+    # open boundary conditions to start
     A_EW[0,0] = 2*(1 + lmbda - lmbda**2)
     A_EW[0,1] = 2*lmbda**2
     A_EW[mx,mx-1] = 2*lmbda**2
     A_EW[mx,mx] = 2*(1 + lmbda - lmbda**2)
     
+    #print(A_EW.todense())
      # initial condition vectors
 
     U = wave(xs)
@@ -267,9 +269,9 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
 
     u_j = np.zeros(xs.size)
     u_j = 0.5*A_EW.dot(U)
-    #u_j[0] /= (1+2*lmbda); u_j[mx] /= (1+2*lmbda)
-    print(u_j)
-    plot_solution(xs, -h(xs))
+    
+    u_j[0] /= (1+2*lmbda); u_j[mx] /= (1+2*lmbda)
+    plot_solution(xs, h(xs))
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)        
    
@@ -280,8 +282,9 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
         
         u_jp1[mx] /= (1+2*lmbda)
         
-        if u_jp1[mx] > 1e-5:
+        if zero_right and u_jp1[mx] > 1e-5:
             zero_right = False
+            print('first non zero right at time {}'.format(t))
         
         if zero_right:
             u_jp1[0] /= (1+2*lmbda)

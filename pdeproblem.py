@@ -228,8 +228,8 @@ class TsunamiProblem:
     def __init__(self,
                  L=30,
                  h0 = 2,
-                 wave = 0.5*sp.exp(-(x-2.5)**2/0.5),
-                 seabed = 0.5*sp.exp(-(x-15)**2/0.5)):
+                 wave = 0.5*sp.exp(-(x-5)**2),
+                 seabed = 0.1*sp.exp(-(x-20)**2/0.5)):
                  #seabed = 0):
         self.L = L
         self.h0 = h0
