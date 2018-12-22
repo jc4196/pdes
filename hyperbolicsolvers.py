@@ -254,41 +254,38 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     #print(A_EW)
     
      # initial condition vectors
-
+    u = [np.zeros(xs.size) for i in range(mt+1)]
+    
     U = wave(xs)
     
     # set first two time steps
-    u_jm1 = U 
+    u[0] = U 
 
-    u_j = np.zeros(xs.size)
-    u_j = 0.5*A_EW.dot(U)
-    
-    u_j[0] /= (1+2*lmbda); u_j[mx] /= (1+2*lmbda)
+    u[1] = 0.5*A_EW.dot(U)
 
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)        
    
     zero_right = True
     
-    for t in ts[1:-1]:
-        u_jp1 = A_EW.dot(u_j) - u_jm1
+    for j in range(1, mt):
+        u[j+1] = A_EW.dot(u[j]) - u[j-1]
         
-        u_jp1[mx] /= (1+2*lmbda)
+        u[j+1][mx] /= (1+2*lmbda)
         
-        if zero_right and u_jp1[mx] > 1e-5:
+        if zero_right and u[j+1][mx] > 1e-5:
             zero_right = False
-            print('first non zero right at time {}'.format(t))
         
         if zero_right:
-            u_jp1[0] /= (1+2*lmbda)
+            u[j+1][0] /= (1+2*lmbda)
         else:
-            u_jp1[0] = u_jp1[mx]
+            u[j+1][0] = u[j+1][mx]
         
         
         # update u_jm1 and u_j
-        u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
+        #u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
     
-    return xs, u_j    
+    return xs, u    
     
     
     

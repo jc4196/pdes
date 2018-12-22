@@ -15,7 +15,7 @@ import matplotlib.pylab as pl
 
 from parabolicsolvers import forwardeuler
 from hyperbolicsolvers import tsunami_solve
-from visualizations import plot_solution
+from visualizations import plot_solution, animate_tsunami
 
 
 class BC:
@@ -234,12 +234,15 @@ class TsunamiProblem:
         self.wave = sp.lambdify(x, wave, 'numpy')
 
         
-    def solve_at_T(self, T, mx, mt):
-        xs, uT = tsunami_solve(mx, mt, self.L, T, self.h0, self.h, self.wave)
+    def solve_at_T(self, T, mx, mt, plot=False, animate=False):
+        xs, u = tsunami_solve(mx, mt, self.L, T, self.h0, self.h, self.wave)
         
-        plot_solution(xs, uT, uexact=self.seabed , style='r-')
+        if plot:
+            plot_solution(xs, u[-1], uexact=self.seabed , style='r-')
+        if animate:
+            animate_tsunami(xs, u, self.L)
         
-        return uT
+        return u[-1]
         
         
     
