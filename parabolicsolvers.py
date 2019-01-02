@@ -32,7 +32,7 @@ def solver(mx, mt, L, T, kappa, ic, source, lbc, rbc, lbctype, rbctype):
 
 """
 import numpy as np
-from helpers import tridiag
+from helpers import tridiag, vectorize_xfn, vectorize_xtfn
 
 from scipy.sparse.linalg import spsolve
 
@@ -137,6 +137,8 @@ def backwardeuler(mx, mt, L, T,
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
 
     u_j = ic(xs)
+    ic, lbc, rbc = vectorize_xfn(ic, lbc, rbc)
+    source = vectorize_xtfn(source)
     
     # if boundary conditions don't match initial conditions
     if lbctype == 'Dirichlet':

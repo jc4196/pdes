@@ -8,6 +8,7 @@ Created on Fri Nov 30 21:34:47 2018
 from pdeproblem import ParabolicProblem, HyperbolicProblem, Dirichlet, Neumann, Open, Periodic, TsunamiProblem
 from parabolicsolvers import forwardeuler, backwardeuler, cranknicholson
 from hyperbolicsolvers import explicitsolve, implicitsolve
+from visualizations import plot_solution
 
 from sympy import *
 from sympy.abc import x, t
@@ -16,6 +17,25 @@ import numpy as np
 from IPython.display import display
 
 init_printing()
+
+
+## Worksheet 1 question 2(a)
+
+def question2a():
+    mx = 30; mt = 1000; L = 1; T = 0.5
+    
+    def uI(x):
+        return np.sin(np.pi*x/L)
+    
+    def u(x):
+        return np.exp(-(np.pi**2)*T)*np.sin(np.pi*x)
+      
+    xs, uT = backwardeuler(mx, mt, L, T,
+                           1, 0,
+                           uI, 0, 0, 'Dirichlet', 'Dirichlet')
+
+    plot_solution(xs, uT, uexact=u)
+    
 
 ## Diffusion Equation Problems ##
 
@@ -185,9 +205,9 @@ def example17():
     
 mx = 30
 mt = 1000
-scheme = cranknicholson
+scheme = backwardeuler
 
-#example1()    
+example1()    
 #example2()
 #example3()
 #example4()
@@ -213,4 +233,6 @@ mt = 800
 
 #example15()
 #example16()
-example17()
+#example17()
+
+question2a()

@@ -109,10 +109,4 @@ def cranknicholson(mx, deltax, deltat, lmbda, p, q):
     return A, B, v
     
 
-def explicitwave(mx, deltax, deltat, lmbda, p, q):
-    A = tridiag(mx,0,0,0,0, 2-2*lmbda**2, lmbda**2, lmbda**2)
-    B = sparse.identity(mx+1, format='csr')
-    
-    v = lambda t: t
-    return A, B, v
     

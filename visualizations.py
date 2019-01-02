@@ -12,7 +12,7 @@ from matplotlib import animation
 def plot_solution(xs, uT, uexact=None, title='', uexacttitle='', style='ro'):
     """Plot the solution uT to a PDE problem at time t"""
     try:
-        pl.plot(xs,uT,style,label='numerical')
+        plt.plot(xs,uT,style,label='numerical')
     except:
         pass
         
@@ -52,6 +52,6 @@ def animate_tsunami(xs, u, L):
     # the video can be embedded in html5.  You may need to adjust this for
     # your system: for more information, see
     # http://matplotlib.sourceforge.net/api/animation_api.html
-    anim.save('basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+    anim.save('tsunami.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
     
     plt.show()

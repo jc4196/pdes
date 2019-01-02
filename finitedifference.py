@@ -368,30 +368,6 @@ def backwardeuler2(T, L, mx, mt, lmbda, u0, lbc, rbc, source):
     return u_j 
 
 
-def discrete_diffusion(dp, T, mx, mt, lmbda, scheme):
-    deltat = T/ mt; deltax = dp.L / mx   # time and space steps
 
-    u_jp1 = np.zeros(u0.size)        # u at next time step 
-    u_j = dp.u0.get_initial_state()  # u at current time step
-
-    # aliases 
-    f = dp.source         # source function
-    p = dp.lbc.apply_rhs  # left boundary function
-    q = dp.rbc.apply_rhs  # right boundary function
-    
-    if dp.isDirichletDirichlet():
-        for n in range(mt):
-            u_jp1 = scheme(u_j, 'DD')
-            u_j = u_jp1
-    elif dp.isDirichletNeumann():
-        pass
-    elif dp.isNeumannDirichlet():
-        pass
-    elif dp.isNeumannNeumann():
-        pass
-    else:
-        pass
-    
-    return u_j
     
     
