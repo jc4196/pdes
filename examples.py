@@ -5,8 +5,8 @@ Created on Fri Nov 30 21:34:47 2018
 @author: james
 """
 
-from parabolicpde import ParabolicProblem, forwardeuler, backwardeuler, cranknicholson
-from boundary import Dirichlet, Neumann
+import parabolicpde as pp
+from boundary import Dirichlet, Neumann, Mixed
 from pdeproblem import HyperbolicProblem, Open, Periodic, TsunamiProblem
 from hyperbolicsolvers import explicitsolve, implicitsolve
 from visualizations import plot_solution
@@ -24,7 +24,7 @@ init_printing()
 
 def example1():
     # Example 1 (These options are the defaults)
-    dp1 = ParabolicProblem()
+    dp1 = pp.ParabolicProblem()
     #dp1.pprint('Diffusion Example 1')
     
     # exact solution
@@ -42,7 +42,7 @@ def example1():
 def example2():
     # Example 2 (another frequency in the initial condition)
       
-    dp2 = ParabolicProblem(ic=sin(pi*x) + 0.5*sin(3*pi*x))
+    dp2 = pp.ParabolicProblem(ic=sin(pi*x) + 0.5*sin(3*pi*x))
     #dp2.pprint('Diffusion Example 2')
     
     # exact solution
@@ -54,15 +54,18 @@ def example3():
     # Example 3 (new boundary condition)
     # u(1,t) = 1
 
-    dp3 = ParabolicProblem(rbc= Dirichlet(1,1))
+    dp3 = pp.ParabolicProblem(rbc= Dirichlet(1,1))
     #dp3.pprint('Diffusion Example 3')
     uT, err = dp3.solve_at_T(0.02, mx, mt, scheme, title='Example 3')
-    
+
+def example3b():
+    # Same as example 3 but using mixed boundary conditions
+    dp3b = pp.ParabolicProblem(lbc=Mixed(0, (1,0,0)), rbc=Mixed(1, (1,0,1)))
+    uT, err = dp3b.solve_at_T(0.02, mx, mt, scheme, title='Example 3b')
     
 def example4():
-    # Example 4 (Initial condition)
-    
-    dp4 = ParabolicProblem(ic=x)
+    # Example 4 (Initial condition)   
+    dp4 = pp.ParabolicProblem(ic=x)
     #dp4.pprint('Diffusion Problem 4')
     
     u_first = (2/pi)*exp(-pi**2*t)*sin(pi*x)
@@ -71,7 +74,7 @@ def example4():
 def example5():
     # Example 5 (Neumann boundary condition)
 
-    dp5 = ParabolicProblem(lbc=Neumann(0,0), rbc=Neumann(1,0), ic=x)
+    dp5 = pp.ParabolicProblem(lbc=Neumann(0,0), rbc=Neumann(1,0), ic=x)
     #dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
@@ -81,7 +84,7 @@ def example5():
 
 def example6():
     # Example 6 (constant source)
-    dp6 = ParabolicProblem(source=1, rbc=Dirichlet(1,1), ic=0)
+    dp6 = pp.ParabolicProblem(source=1, rbc=Dirichlet(1,1), ic=0)
     #dp6.pprint('Diffusion Problem 6')
     
     # steady state
@@ -91,7 +94,7 @@ def example6():
 def example7():
     # Example 6 (source variable in x)
     
-    dp7 = ParabolicProblem(source=sin(3*pi*x), ic=sin(pi*x))
+    dp7 = pp.ParabolicProblem(source=sin(3*pi*x), ic=sin(pi*x))
     #dp7.pprint('Diffusion Problem 7')
     
     u = exp(-(pi**2)*t)*sin(pi*x) + \
@@ -100,7 +103,7 @@ def example7():
     dp7.solve_at_T(0.4, mx, mt, scheme, u_exact = u)
 
 def example8():
-    dp8 = ParabolicProblem(ic=4*sin(3*pi*x))
+    dp8 = pp.ParabolicProblem(ic=4*sin(3*pi*x))
     #dp8.pprint('Diffusion Problem 8')
     
     u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
@@ -190,16 +193,17 @@ def example17():
     
 mx = 20
 mt = 500
-scheme = forwardeuler
+scheme = pp.backwardeuler2
 
-example1()    
-example2()
-example3()
-example4()
-example5()
-example6()
-example7()
-example8()
+#example1()    
+#example2()
+#example3()
+example3b()
+#example4()
+#example5()
+#example6()
+#example7()
+#example8()
 
 ## Wave Equation Problems ##
 

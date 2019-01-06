@@ -18,7 +18,7 @@ class Mixed:
         self.u = sp.Function('u')
         self.xb = xb
         self.alpha, self.beta, self.rhs = params
-        self.type = 'Mixed'
+        self.type = self.alpha, self.beta
     
     def pprint(self):
         display(sp.Eq(self.alpha*self.u(x, t).subs(x, self.xb) + \

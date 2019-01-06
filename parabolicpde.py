@@ -70,6 +70,8 @@ class ParabolicProblem:
         """
         
         # solve the PDE by the given scheme
+        print(self.rbc.type)
+        print(self.lbc.type)
         xs, uT =  scheme(mx, mt, self.L, T,
                          self.kappa, self.source, self.ic,
                          self.lbc.rhs, self.rbc.rhs,
@@ -204,6 +206,55 @@ def backwardeuler(mx, mt, L, T,
         u_j[:] = u_jp1[:]
     return xs, u_j
 
+
+def backwardeuler2(mx, mt, L, T, 
+                  kappa, source,
+                  ic, lbc, rbc, lbc_ab, rbc_ab):
+    """second implementation of backward Euler that takes mixed boundary
+    conditions"""
+    
+    # initialise   parameters   
+    xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
+ 
+    # make sure these functions are vectorized
+    ic, lbc, rbc, source = numpify_many((ic, 1), (lbc, 1),
+                                        (rbc, 1), (source, 2))
+    
+    # Parameters needed to construct the matrix
+    alpha1, beta1 = lbc_ab
+    alpha2, beta2 = rbc_ab
+    
+    # Construct the backward Euler matrix
+    lower = mx*[-lmbda] + [-beta2]
+    main = [alpha1*deltax - beta1] + (mx-1)*[1+2*lmbda] + \
+                [beta2 + alpha2*deltax]
+    upper = [beta1] + mx*[-lmbda]
+    A_BE = tridiag(mx+1, lower, main, upper)
+
+    # initialise the first time steps
+    u_j = np.zeros(xs.size)
+    u_jp1 = np.zeros(xs.size)      
+    u_j[:] = ic(xs)[:]
+    
+    
+    # Solve the PDE: loop over all time points
+    for j in ts[:-1]:  
+        # Add boundary conditions to vector u_j
+        u_j[0] = deltax*lbc(j*deltat)            
+        u_j[mx] = deltax*rbc(j*deltat)
+        
+        # Backward Euler timestep at inner mesh points
+        u_jp1 = spsolve(A_BE, u_j)
+ 
+        # add source function
+        u_jp1[1:mx] += deltat*source(xs[1:-1], j*deltat)
+        
+        # Update u_j
+        u_j[:] = u_jp1[:]
+         
+    return xs, u_j 
+
+
 def cranknicholson(mx, mt, L, T, 
                    kappa, source,
                    ic, lbc, rbc, lbctype, rbctype):
@@ -260,6 +311,10 @@ def cranknicholson(mx, mt, L, T,
     
     return xs, u_j
 
+
+
+## Extra functions ##
+    
 def initialise(mx, mt, L, T, kappa):
     """initialise parameters that will be used for the solving the PDE"""
     xs = np.linspace(0, L, mx+1)          # mesh points in space
