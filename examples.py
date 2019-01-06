@@ -5,8 +5,9 @@ Created on Fri Nov 30 21:34:47 2018
 @author: james
 """
 
-from pdeproblem import ParabolicProblem, HyperbolicProblem, Dirichlet, Neumann, Open, Periodic, TsunamiProblem
-from parabolicsolvers import forwardeuler, backwardeuler, cranknicholson
+from parabolicpde import ParabolicProblem, forwardeuler, backwardeuler, cranknicholson
+from boundary import Dirichlet, Neumann
+from pdeproblem import HyperbolicProblem, Open, Periodic, TsunamiProblem
 from hyperbolicsolvers import explicitsolve, implicitsolve
 from visualizations import plot_solution
 
@@ -74,7 +75,8 @@ def example5():
     #dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
-    uT, err = dp5.solve_at_T(0.1, mx, mt, scheme, u_exact=u_first, title='Example 5')
+    uT, err = dp5.solve_at_T(0.1, mx, mt, scheme,
+                             u_exact=u_first, title='Example 5')
     print(err)
 
 def example6():
@@ -186,18 +188,18 @@ def example17():
  
 ## Diffusion Equation Problems ##
     
-mx = 30
-mt = 1000
-scheme = backwardeuler
+mx = 20
+mt = 500
+scheme = forwardeuler
 
-#example1()    
-#example2()
-#example3()
-#example4()
+example1()    
+example2()
+example3()
+example4()
 example5()
-#example6()
-#example7()
-#example8()
+example6()
+example7()
+example8()
 
 ## Wave Equation Problems ##
 

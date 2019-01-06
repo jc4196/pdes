@@ -17,6 +17,7 @@ from parabolicsolvers import forwardeuler
 from hyperbolicsolvers import tsunami_solve
 from visualizations import plot_solution, animate_tsunami
 from helpers import numpify
+
 class BC:
     """General boundary condition for the diffusion problem of the form
     alpha*u(xb,t) + beta*du(xb,t)/dx = g(t)

@@ -10,7 +10,7 @@ from sympy.abc import x, t
 
 from IPython.display import display
 
-class BC:
+class Mixed:
     """General mixed boundary condition for the diffusion problem of the form
     alpha*u(xb,t) + beta*du(xb,t)/dx = rhs
     """
@@ -26,23 +26,23 @@ class BC:
                       self.rhs))
 
     
-class Dirichlet(BC):
+class Dirichlet(Mixed):
     """
     Dirichlet boundary condition of the form
     u(xb, t) = rhs
     """
     def __init__(self, xb, rhs):
-        BC.__init__(self, xb, (1, 0, rhs))
+        Mixed.__init__(self, xb, (1, 0, rhs))
         self.type = 'Dirichlet'
     
 
-class Neumann(BC):
+class Neumann(Mixed):
     """
     Neumann boundary condition of the form
     du(xb,t)/dx = rhs
     """
     def __init__(self, xb, rhs):
-        BC.__init__(self, xb, (0, 1, rhs))
+        Mixed.__init__(self, xb, (0, 1, rhs))
         self.type = 'Neumann'
         
     

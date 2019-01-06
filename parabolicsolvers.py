@@ -142,6 +142,7 @@ def backwardeuler(mx, mt, L, T,
     
     
     u_j = ic(xs)
+    print(type(u_j))
     plot_solution(xs, u_j)
     # if boundary conditions don't match initial conditions
     if lbctype == 'Dirichlet':
@@ -160,7 +161,7 @@ def backwardeuler(mx, mt, L, T,
 
     # range of rows of B_FE to use
     a, b = matrixrowrange(mx, lbctype, rbctype)
-
+    print(a,b)
     # Solve the PDE at each time step
     for t in ts[:-1]:
         addboundaries(u_j, lbctype, rbctype,
