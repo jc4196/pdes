@@ -17,24 +17,6 @@ import numpy as np
 from IPython.display import display
 
 init_printing()
-
-
-## Worksheet 1 question 2(a)
-
-def question2a():
-    mx = 30; mt = 1000; L = 1; T = 0.5
-    
-    def uI(x):
-        return np.sin(np.pi*x/L)
-    
-    def u(x):
-        return np.exp(-(np.pi**2)*T)*np.sin(np.pi*x)
-      
-    xs, uT = backwardeuler(mx, mt, L, T,
-                           1, 0,
-                           uI, 0, 0, 'Dirichlet', 'Dirichlet')
-
-    plot_solution(xs, uT, uexact=u)
     
 
 ## Diffusion Equation Problems ##
@@ -73,7 +55,7 @@ def example3():
 
     dp3 = ParabolicProblem(rbc= Dirichlet(1,1))
     #dp3.pprint('Diffusion Example 3')
-    dp3.solve_at_T(0.02, mx, mt, scheme, title='Example 3')
+    uT, err = dp3.solve_at_T(0.02, mx, mt, scheme, title='Example 3')
     
     
 def example4():
@@ -92,7 +74,8 @@ def example5():
     #dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
-    dp5.solve_at_T(1, mx, mt, scheme, u_exact=u_first, title='Example 5')
+    uT, err = dp5.solve_at_T(0.1, mx, mt, scheme, u_exact=u_first, title='Example 5')
+    print(err)
 
 def example6():
     # Example 6 (constant source)
@@ -207,11 +190,11 @@ mx = 30
 mt = 1000
 scheme = backwardeuler
 
-example1()    
+#example1()    
 #example2()
 #example3()
 #example4()
-#example5()
+example5()
 #example6()
 #example7()
 #example8()
@@ -234,5 +217,3 @@ mt = 800
 #example15()
 #example16()
 #example17()
-
-question2a()

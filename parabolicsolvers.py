@@ -32,7 +32,8 @@ def solver(mx, mt, L, T, kappa, ic, source, lbc, rbc, lbctype, rbctype):
 
 """
 import numpy as np
-from helpers import tridiag, vectorize_xfn, vectorize_xtfn
+from helpers import tridiag, vectorize_xfn, vectorize_xtfn, numpify_many
+from visualizations import plot_solution
 
 from scipy.sparse.linalg import spsolve
 
@@ -135,11 +136,13 @@ def backwardeuler(mx, mt, L, T,
     
     # initialise     
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
-
-    u_j = ic(xs)
-    ic, lbc, rbc = vectorize_xfn(ic, lbc, rbc)
-    source = vectorize_xtfn(source)
+ 
+    ic, lbc, rbc, source = numpify_many((ic,'x'), (lbc,'x'),
+                                        (rbc, 'x'), (source, 'x t'))
     
+    
+    u_j = ic(xs)
+    plot_solution(xs, u_j)
     # if boundary conditions don't match initial conditions
     if lbctype == 'Dirichlet':
         u_j[0] = lbc(0)
@@ -184,7 +187,7 @@ def backwardeuler(mx, mt, L, T,
 def cranknicholson(mx, mt, L, T, 
                    kappa, source,
                    ic, lbc, rbc, lbctype, rbctype):
-    """Backward Euler finite-difference scheme (implicit) for solving 
+    """Crank-Nicholson finite-difference scheme (implicit) for solving 
     parabolic PDE problems. Unconditionally stable"""
     
     # initialise     
@@ -230,69 +233,6 @@ def cranknicholson(mx, mt, L, T,
         
         # add source to inner terms
         u_jp1[1:-1] += 0.5*deltat*(source(xs[1:-1], t) + source(xs[1:-1], t + deltat))
-        
-        u_j[:] = u_jp1[:]
-    
-    return xs, u_j
-
-
-def solve_diffusion_pde(mx, mt, L, T, scheme, 
-                        kappa, source,
-                        ic, lbc, rbc, boundaries):
-    """
-    Solve a diffusion type problem with the given spacing and scheme
-    
-    Parameters
-        mx         (mx+1 is) number of mesh points in space
-        mt         (mt + 1 is ) number of mesh points in time
-        L          length of interval
-        T          time to solve to
-        kappa      diffusion constant
-        ic         initial condition function (vectorized)
-        lbc        left boundary condition function (vectorized)
-        rbc        right boundary condition function (vectorized)
-        boundaries    signature of boundary types *to finish
-        source     source function (vectorized)
-        scheme     scheme to solve the pde eg. forwardeuler, backward euler..
-    
-    returns
-        xs      mesh points in space
-        uT      the numerical solution u at time T
-    """
-    xs = np.linspace(0, L, mx+1)     # mesh points in space
-    ts = np.linspace(0, T, mt+1)          # mesh points in time
-    deltax = xs[1] - xs[0]                # gridspacing in x
-    deltat = ts[1] - ts[0]                # gridspacing in t
-    lmbda = kappa*deltat/(deltax**2)    # mesh fourier number
-
-    u_j = ic(xs)
-    u_jp1 = np.zeros(xs.size)
-    
-    # Get matrices and vector for the particular scheme
-    A, B, boundary_fns = scheme(mx, deltax, deltat, lmbda, lbc, rbc)
-        
-    a, b = matrix_indices(boundaries, mx)
-    l, r = boundaries
-
-    
-    for n in range(1, mt+1):
-        # Solve matrix equation A*u_{j+1} = B*u_j + v
-        
-        v = np.zeros(b-a)
-        v[0] = boundary_fns(n*deltat)[0] if l == 'N' else boundary_fns(n*deltat)[1]
-        v[-1] = boundary_fns(n*deltat)[2] if r == 'D' else boundary_fns(n*deltat)[3]
-    
-        u_jp1[a:b] = spsolve(A[a:b,a:b],
-                             B[a:b,a:b].dot(u_j[a:b]) + v)
-        
-        # add source to inner terms
-        u_jp1[1:-1] += deltat*source(xs[1:-1], n*deltat)
-        
-        # fix Dirichlet boundary conditions
-        if a == 1:
-            u_jp1[0] = lbc(n*deltat)
-        if b == mx:
-            u_jp1[-1] = rbc(n*deltat)
         
         u_j[:] = u_jp1[:]
     

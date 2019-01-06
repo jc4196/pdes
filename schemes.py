@@ -108,5 +108,65 @@ def cranknicholson(mx, deltax, deltat, lmbda, p, q):
     
     return A, B, v
     
+def solve_diffusion_pde(mx, mt, L, T, scheme, 
+                        kappa, source,
+                        ic, lbc, rbc, boundaries):
+    """
+    Solve a diffusion type problem with the given spacing and scheme
+    
+    Parameters
+        mx         (mx+1 is) number of mesh points in space
+        mt         (mt + 1 is ) number of mesh points in time
+        L          length of interval
+        T          time to solve to
+        kappa      diffusion constant
+        ic         initial condition function (vectorized)
+        lbc        left boundary condition function (vectorized)
+        rbc        right boundary condition function (vectorized)
+        boundaries    signature of boundary types *to finish
+        source     source function (vectorized)
+        scheme     scheme to solve the pde eg. forwardeuler, backward euler..
+    
+    returns
+        xs      mesh points in space
+        uT      the numerical solution u at time T
+    """
+    xs = np.linspace(0, L, mx+1)     # mesh points in space
+    ts = np.linspace(0, T, mt+1)          # mesh points in time
+    deltax = xs[1] - xs[0]                # gridspacing in x
+    deltat = ts[1] - ts[0]                # gridspacing in t
+    lmbda = kappa*deltat/(deltax**2)    # mesh fourier number
 
+    u_j = ic(xs)
+    u_jp1 = np.zeros(xs.size)
+    
+    # Get matrices and vector for the particular scheme
+    A, B, boundary_fns = scheme(mx, deltax, deltat, lmbda, lbc, rbc)
+        
+    a, b = matrix_indices(boundaries, mx)
+    l, r = boundaries
+
+    
+    for n in range(1, mt+1):
+        # Solve matrix equation A*u_{j+1} = B*u_j + v
+        
+        v = np.zeros(b-a)
+        v[0] = boundary_fns(n*deltat)[0] if l == 'N' else boundary_fns(n*deltat)[1]
+        v[-1] = boundary_fns(n*deltat)[2] if r == 'D' else boundary_fns(n*deltat)[3]
+    
+        u_jp1[a:b] = spsolve(A[a:b,a:b],
+                             B[a:b,a:b].dot(u_j[a:b]) + v)
+        
+        # add source to inner terms
+        u_jp1[1:-1] += deltat*source(xs[1:-1], n*deltat)
+        
+        # fix Dirichlet boundary conditions
+        if a == 1:
+            u_jp1[0] = lbc(n*deltat)
+        if b == mx:
+            u_jp1[-1] = rbc(n*deltat)
+        
+        u_j[:] = u_jp1[:]
+    
+    return xs, u_j
     

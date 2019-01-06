@@ -16,11 +16,9 @@ import matplotlib.pylab as pl
 from parabolicsolvers import forwardeuler
 from hyperbolicsolvers import tsunami_solve
 from visualizations import plot_solution, animate_tsunami
-
-
+from helpers import numpify
 class BC:
     """General boundary condition for the diffusion problem of the form
-    
     alpha*u(xb,t) + beta*du(xb,t)/dx = g(t)
     """
     def __init__(self, xb, params):
@@ -105,20 +103,13 @@ class ParabolicProblem:
                  lbc=Dirichlet(0,0),
                  rbc=Dirichlet(1, 0),
                  source=0):
-        self.kappa = kappa   # Diffusion constant
-        self.L = L           # Length of interval
-        self.lbc = lbc       # Left boundary condition as above
-        self.rbc = rbc       # Right boundary condition as above
-        
-        # Initial condition function h(x)
-        self.ic_expr = ic  # initial condition expression for printing
-        self.ic = np.vectorize(sp.lambdify(x, ic, 'numpy'),
-                               otypes=[np.float32])
-        
-        # Source function f(x)
-        self.source_expr = source # source expression for printing
-        self.source = np.vectorize(sp.lambdify((x, t), source, 'numpy'),
-                                   otypes=[np.float32])  
+        self.kappa = kappa    # Diffusion constant
+        self.L = L            # Length of interval
+        self.lbc = lbc        # Left boundary condition as above
+        self.rbc = rbc        # Right boundary condition as above
+        self.ic = ic          # Initial condition function h(x)
+        self.source = source  # Source function f(x)
+ 
  
     def pprint(self, title=''):
         """Print the diffusion problem with latex"""
@@ -126,10 +117,10 @@ class ParabolicProblem:
         u = sp.Function('u')
         x, t = sp.symbols('x t')
         display(sp.Eq(u(x,t).diff(t),
-                      self.kappa*u(x,t).diff(x,2) + self.source_expr))
+                      self.kappa*u(x,t).diff(x,2) + self.source))
         self.lbc.pprint()
         self.rbc.pprint()
-        display(sp.Eq(u(x,0), self.ic_expr))
+        display(sp.Eq(u(x,0), self.ic))
     
     def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
         xs, uT =  scheme(mx, mt, self.L, T,
@@ -141,10 +132,12 @@ class ParabolicProblem:
             uTsym = u_exact.subs({kappa: self.kappa,
                                   L: self.L,
                                   t: T})
-            u = sp.lambdify(x, uTsym)
+            #u = sp.lambdify(x, uTsym)
+            u = numpify(uTsym, 'x')
             error = np.linalg.norm(u(xs) - uT)            
             if plot:       
-                plot_solution(xs, uT, u, title=title, uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
+                plot_solution(xs, uT, u, title=title,
+                              uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
         else:
             error = None
             if plot:
@@ -152,10 +145,6 @@ class ParabolicProblem:
         
         return uT, error
 
-    def solve_at_Ts(self, t_range, mx, mt, scheme, animate=True):
-        """Solve the diffusion problem for a range of times and animate the
-        solution"""
-        pass
     
     
 class HyperbolicProblem():
@@ -208,15 +197,16 @@ class HyperbolicProblem():
                         self.ix, self.iv,
                         self.lbc.apply_rhs, self.rbc.apply_rhs,
                         self.lbc.get_type(), self.rbc.get_type())
-        
         if u_exact:
             uTsym = u_exact.subs({c: self.c,
                                   L: self.L,
                                   t: T})
-            u = sp.lambdify(x, uTsym)
+            #u = sp.lambdify(x, uTsym)
+            u = numpify((uTsym, 'x'))
             error = np.linalg.norm(u(xs) - uT)            
-            if plot:       
-                plot_solution(xs, uT, u, title=title, uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
+            if plot:
+                plot_solution(xs, uT, u, title=title,
+                              uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
         else:
             error = None
             if plot:
