@@ -115,11 +115,8 @@ def forwardeuler(mx, mt, L, T,
     A_FE[0,1] *= 2; A_FE[mx,mx-1] *= 2
 
     # initialise first time steps
-    u_j = np.zeros(xs.size)
+    u_j = ic(xs).copy()
     u_jp1 = np.zeros(xs.size)
-    
-    u_j[:] = ic(xs)[:]
-
 
 
     # range of rows of A_FE to use
@@ -174,10 +171,8 @@ def backwardeuler(mx, mt, L, T,
     b = mx if rbctype == 'Dirichlet' else mx+1
 
     # initialise first time steps
-    u_j = np.zeros(xs.size)
+    u_j = ic(xs).copy()
     u_jp1 = np.zeros(xs.size)
-    
-    u_j[:] = ic(xs)[:]
 
     # Solve the PDE at each time step
     for j in ts[:-1]:
@@ -222,7 +217,8 @@ def backwardeuler2(mx, mt, L, T,
     alpha1, beta1 = lbc_ab
     alpha2, beta2 = rbc_ab
     
-    # Construct the backward Euler matrix
+    # Construct the backward Euler matrix, first and last row are 
+    # boundary condition equations
     lower = (mx-1)*[-lmbda] + [-beta2]
     main = [alpha1*deltax - beta1] + (mx-1)*[1+2*lmbda] + \
                 [beta2 + alpha2*deltax]
@@ -230,10 +226,8 @@ def backwardeuler2(mx, mt, L, T,
     A_BE = tridiag(mx+1, lower, main, upper)
 
     # initialise the first time steps
-    u_j = np.zeros(xs.size)
-    u_jp1 = np.zeros(xs.size)      
-    u_j[:] = ic(xs)[:]
-    
+    u_j = ic(xs).copy()
+    u_jp1 = np.zeros(xs.size)          
     
     # Solve the PDE: loop over all time points
     for j in ts[:-1]:  
@@ -241,12 +235,11 @@ def backwardeuler2(mx, mt, L, T,
         u_j[0] = deltax*lbc(j*deltat)            
         u_j[mx] = deltax*rbc(j*deltat)
         
-        # Backward Euler timestep at inner mesh points
+        # Backward euler timestep
         u_jp1 = spsolve(A_BE, u_j)
-        #print(A_BE[mx,mx], u_j[mx], u_jp1[-1])
  
         # add source function
-        #u_jp1[1:mx] += deltat*source(xs[1:-1], j*deltat)
+        u_jp1[1:mx] += deltat*source(xs[1:-1], j*deltat)
         
         # Update u_j
         u_j[:] = u_jp1[:]
@@ -278,11 +271,9 @@ def cranknicholson(mx, mt, L, T,
     b = mx if rbctype == 'Dirichlet' else mx+1
 
     # initialise first time steps
-    u_j = np.zeros(xs.size)
+    u_j = ic(xs).copy()
     u_jp1 = np.zeros(xs.size)
     v = np.zeros(xs.size)  
-    
-    u_j[:] = ic(xs)[:]
     
     # Solve the PDE at each time step
     for j in ts[:-1]:
@@ -309,7 +300,6 @@ def cranknicholson(mx, mt, L, T,
         u_j[:] = u_jp1[:]
     
     return xs, u_j
-
 
 
 ## Extra functions ##

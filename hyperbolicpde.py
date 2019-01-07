@@ -17,6 +17,9 @@ from helpers import tridiag, numpify_many, numpify, get_error
 from boundary import Dirichlet
 from visualizations import plot_solution, animate_tsunami
 
+
+## Objects ##
+
 class HyperbolicProblem:
     """Object specifying a wave equation type problem of the form
     d^2u/dt^2 = c^2 d^2u/dx^2 + f(x)
@@ -110,6 +113,7 @@ class TsunamiProblem:
         
         return u[-1]
 
+## Solvers ##
 
 def explicitsolve(mx, mt, L, T,
                   c, source,
@@ -141,8 +145,6 @@ def explicitsolve(mx, mt, L, T,
 
     # set first two time steps
     u_jm1 = U 
-
-    u_j = np.zeros(xs.size)
     u_j = 0.5*A_EW.dot(U) + deltat*V   
  
     # initialise u at next time step
@@ -185,7 +187,6 @@ def implicitsolve(mx, mt, L, T,
     ix, iv, lbc, rbc, source = numpify_many((ix, 'x'), (iv, 'x'), (lbc, 't'),
                                             (rbc, 't'), (source, 'x t'))
     
-
     # construct matrices for implicit scheme
     A_IW = tridiag(mx+1, -0.5*lmbda**2, 1+lmbda**2, -0.5*lmbda**2)
     B_IW = tridiag(mx+1, 0.5*lmbda**2, -1-lmbda**2, 0.5*lmbda**2)
@@ -202,13 +203,8 @@ def implicitsolve(mx, mt, L, T,
     V = iv(xs).copy()
     
     # set first two time steps
-    u_jm1 = U 
-    
-    u_j = np.zeros(xs.size)
-    w = np.zeros(xs.size)
-    
-    w = U - deltat*B_IW.dot(V)
-    u_j = spsolve(A_IW, w)
+    u_jm1 = U  
+    u_j = spsolve(A_IW, U - deltat*B_IW.dot(V))
 
     # initialise u at next time step
     u_jp1 = np.zeros(xs.size)
@@ -226,11 +222,10 @@ def implicitsolve(mx, mt, L, T,
         u_jp1 = spsolve(A_IW, v)
         
         if lbctype == 'Dirichlet':
-            u_jp1[0] = lbc(t + deltat)
+            u_jp1[0] = lbc(j + deltat)
         if rbctype == 'Dirichlet':
-            u_jp1[mx] = rbc(t + deltat)
+            u_jp1[mx] = rbc(j + deltat)
     
-            
         # add source to inner terms
         u_jp1[1:-1] += deltat*source(xs[1:-1], j)
         
@@ -290,6 +285,9 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
             u[j+1][0] = u[j+1][mx]
     
     return xs, u    
+
+
+## Extra Functions ##
 
 def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
     """Add Neumann or Dirichlet boundary conditions"""

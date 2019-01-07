@@ -174,19 +174,8 @@ def example14():
     wp14 = hp.HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(0.5, mx, mt, scheme, title='Wave Problem 6')
  
-def example15():
-    # travelling wave with open boundaries
-    wp15 = hp.HyperbolicProblem(L=10, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Open(0, 1), rbc=Open(10, 1))
-    #wp15.pprint()
-    uT, error = wp15.solve_at_T(6, mx, mt, scheme, title='Travelling Wave')
 
-def example16():
-    # travelling wave with periodic boundary, left wave leaves the domain
-    wp16 = hp.HyperbolicProblem(L=20, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Periodic(0, 20), rbc=Open(20, 1))
-    #wp15.pprint()
-    uT, error = wp16.solve_at_T(17, mx, mt, scheme, title='Travelling Wave')
-
-def example17():
+def tsunami():
     # travelling wave with variable seabed
     L=50
     h0=8
@@ -201,11 +190,11 @@ def example17():
  
 ## Diffusion Equation Problems ##
     
-mx = 100
-mt = 5000
-scheme = pp.backwardeuler
+mx = 30
+mt = 500
+scheme = pp.cranknicholson
 
-example1()    
+#example1()    
 #example2()
 #example3()
 #example3b()
@@ -218,19 +207,17 @@ example1()
 
 ## Wave Equation Problems ##
 
-scheme = hp.explicitsolve
+scheme = hp.implicitsolve
 mx = 200
 mt = 800
 
-#example9()
-#example10()
-#example11()
-#example12()
-#example13()
-#example14()
+example9()
+example10()
+example11()
+example12()
+example13()
+example14()
 
-## travelling waves
+## tsunami
 
-#example15()
-#example16()
-example17()
+#tsunami()
