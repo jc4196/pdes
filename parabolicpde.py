@@ -224,10 +224,10 @@ def backwardeuler2(mx, mt, L, T,
     alpha2, beta2 = rbc_ab
     
     # Construct the backward Euler matrix
-    lower = mx*[-lmbda] + [-beta2]
+    lower = (mx-1)*[-lmbda] + [-beta2]
     main = [alpha1*deltax - beta1] + (mx-1)*[1+2*lmbda] + \
                 [beta2 + alpha2*deltax]
-    upper = [beta1] + mx*[-lmbda]
+    upper = [beta1] + (mx-1)*[-lmbda]
     A_BE = tridiag(mx+1, lower, main, upper)
 
     # initialise the first time steps
@@ -244,9 +244,10 @@ def backwardeuler2(mx, mt, L, T,
         
         # Backward Euler timestep at inner mesh points
         u_jp1 = spsolve(A_BE, u_j)
+        #print(A_BE[mx,mx], u_j[mx], u_jp1[-1])
  
         # add source function
-        u_jp1[1:mx] += deltat*source(xs[1:-1], j*deltat)
+        #u_jp1[1:mx] += deltat*source(xs[1:-1], j*deltat)
         
         # Update u_j
         u_j[:] = u_jp1[:]

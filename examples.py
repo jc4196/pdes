@@ -62,7 +62,7 @@ def example3():
 def example3b():
     # Same as example 3 but using mixed boundary conditions
     dp3b = pp.ParabolicProblem(lbc=Mixed(0, (1,0,0)), rbc=Mixed(1, (1,0,1)))
-    uT, err = dp3b.solve_at_T(0.02, mx, mt, scheme, title='Example 3b')
+    uT, err = dp3b.solve_at_T(0.02, mx, mt, pp.backwardeuler2, title='Example 3b')
     
 def example4():
     # Example 4 (Initial condition)   
@@ -110,7 +110,16 @@ def example8():
     u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
     dp8.solve_at_T(0.1, mx, mt, scheme, u_exact=u)
 
-
+def mixedexample():
+    dpmixed = pp.ParabolicProblem(lbc=Mixed(0, (1,0,0)),
+                                  rbc=Mixed(1, (1,1,0)),
+                                  ic=x)
+    
+    u = 0.24*exp(-4*t)*sin(2*x) + 0.22*exp(-24*t)*sin(4.9*x)
+    uT, err = dpmixed.solve_at_T(6, mx, mt, pp.backwardeuler2, u_exact=u)
+    print(err)
+    
+    
 ## Wave Equation Problems ##
 
 def example9():
@@ -192,19 +201,20 @@ def example17():
  
 ## Diffusion Equation Problems ##
     
-mx = 20
+mx = 30
 mt = 500
 scheme = pp.backwardeuler
 
-example1()    
-example2()
-example3()
+#example1()    
+#example2()
+#example3()
 #example3b()
-example4()
-example5()
-example6()
-example7()
-example8()
+#example4()
+#example5()
+#example6()
+#example7()
+#example8()
+mixedexample()
 
 ## Wave Equation Problems ##
 
@@ -212,12 +222,12 @@ scheme = hp.explicitsolve
 mx = 200
 mt = 800
 
-example9()
-example10()
-example11()
-example12()
-example13()
-example14()
+#example9()
+#example10()
+#example11()
+#example12()
+#example13()
+#example14()
 
 ## travelling waves
 
