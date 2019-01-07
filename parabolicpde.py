@@ -13,7 +13,7 @@ from sympy.abc import x, t, kappa, L
 from IPython.display import display
 
 from boundary import Dirichlet
-from helpers import tridiag, numpify, numpify_many
+from helpers import tridiag, numpify, numpify_many, get_error
 from visualizations import plot_solution
 
 class ParabolicProblem:
@@ -80,11 +80,10 @@ class ParabolicProblem:
             uTsym = u_exact.subs({kappa: self.kappa,
                                   L: self.L,
                                   t: T})
-            u = numpify(uTsym, 'x')
             # use L2 norm to calculate absolute error
-            error = np.linalg.norm(u(xs) - uT)            
+            error = get_error(xs, uT, uTsym)            
             if plot:       
-                plot_solution(xs, uT, u, title=title,
+                plot_solution(xs, uT, uTsym, title=title,
                               uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
         else:
             error = None

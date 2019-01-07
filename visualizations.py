@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
+from helpers import numpify
+
 def plot_solution(xs, uT, uexact=None, title='', uexacttitle='', style='ro'):
     """Plot the solution uT to a PDE problem at time t"""
     try:
@@ -17,9 +19,10 @@ def plot_solution(xs, uT, uexact=None, title='', uexacttitle='', style='ro'):
         pass
         
     if uexact:
+        u = numpify(uexact, 'x')
         xx = np.linspace(xs[0], xs[-1], 250)
 
-        plt.plot(xx, uexact(xx),'b-',label=uexacttitle)
+        plt.plot(xx, u(xx),'b-',label=uexacttitle)
 
     plt.xlabel('x')
     plt.ylabel('u(x,T)')

@@ -8,8 +8,7 @@ Created on Fri Nov 30 21:34:47 2018
 import parabolicpde as pp
 import hyperbolicpde as hp
 from boundary import Dirichlet, Neumann, Mixed
-#from pdeproblem import Open, Periodic, TsunamiProblem
-#from hyperbolicsolvers import explicitsolve, implicitsolve
+
 from visualizations import plot_solution
 
 from sympy import *
@@ -116,7 +115,7 @@ def mixedexample():
                                   ic=x)
     
     u = 0.24*exp(-4*t)*sin(2*x) + 0.22*exp(-24*t)*sin(4.9*x)
-    uT, err = dpmixed.solve_at_T(6, mx, mt, pp.backwardeuler2, u_exact=u)
+    uT, err = dpmixed.solve_at_T(4, mx, mt, pp.backwardeuler2, u_exact=u)
     print(err)
     
     
@@ -190,22 +189,23 @@ def example16():
 def example17():
     # travelling wave with variable seabed
     L=50
-    h0 =8
+    h0=8
     wave = 20*exp(-(x-5)**2/3)
     seabed = 7*exp(-(x-25)**2/50)
     #seabed = 0
     
-    wp17 = TsunamiProblem(L, h0, wave, seabed)
+    wp17 = hp.TsunamiProblem(L, h0, wave, seabed)
     
-    uT = wp17.solve_at_T(40, 250, 600, animate=True)
+    # T = 40 makes a good animation
+    uT = wp17.solve_at_T(8.5, 250, 600, plot=True, animate=False)
  
 ## Diffusion Equation Problems ##
     
-mx = 30
-mt = 500
+mx = 100
+mt = 5000
 scheme = pp.backwardeuler
 
-#example1()    
+example1()    
 #example2()
 #example3()
 #example3b()
@@ -214,7 +214,7 @@ scheme = pp.backwardeuler
 #example6()
 #example7()
 #example8()
-mixedexample()
+#mixedexample()
 
 ## Wave Equation Problems ##
 
@@ -233,4 +233,4 @@ mt = 800
 
 #example15()
 #example16()
-#example17()
+example17()

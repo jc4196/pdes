@@ -5,6 +5,7 @@ Created on Mon Jan  7 17:52:20 2019
 @author: james
 """
 import numpy as np
+from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
 import sympy as sp
@@ -12,9 +13,9 @@ from sympy.abc import x, t, L, c
 
 from IPython.display import display
 
-from helpers import tridiag, numpify_many, numpify
+from helpers import tridiag, numpify_many, numpify, get_error
 from boundary import Dirichlet
-from visualizations import plot_solution
+from visualizations import plot_solution, animate_tsunami
 
 class HyperbolicProblem:
     """Object specifying a wave equation type problem of the form
@@ -79,11 +80,10 @@ class HyperbolicProblem:
             uTsym = u_exact.subs({c: self.c,
                                   L: self.L,
                                   t: T})
-            u = numpify(uTsym, 'x')
             # use L2 norm to calculate absolute error
-            error = np.linalg.norm(u(xs) - uT)            
+            error = get_error(xs, uT, uTsym)
             if plot:
-                plot_solution(xs, uT, u, title=title,
+                plot_solution(xs, uT, uTsym, title=title,
                               uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
         else:
             error = None
@@ -91,6 +91,24 @@ class HyperbolicProblem:
                 plot_solution(xs, uT, title=title)            
         
         return uT, error      
+
+class TsunamiProblem:
+    def __init__(self, L, h0, wave, seabed):
+        self.L = L
+        self.h0 = h0
+        self.seabed = seabed - h0
+        self.h = h0 - seabed
+        self.wave = wave
+   
+    def solve_at_T(self, T, mx, mt, plot=False, animate=False):
+        xs, u = tsunami_solve(mx, mt, self.L, T, self.h0, self.h, self.wave)
+        
+        if plot:
+            plot_solution(xs, u[-1], uexact=self.seabed , style='r-')
+        if animate:
+            animate_tsunami(xs, u, self.L)
+        
+        return u[-1]
 
 
 def explicitsolve(mx, mt, L, T,
@@ -221,7 +239,57 @@ def implicitsolve(mx, mt, L, T,
     
     return xs, u_j
 
+def tsunami_solve(mx, mt, L, T, h0, h, wave):
+    """Variable wavespeed problem assumes periodic boundary on the left and 
+    an open boundary on the right"""
+    xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, np.sqrt(h0))
+    
+    h, wave = numpify_many((h, 'x'), (wave,'x'))
+    delta = deltat/deltax
+    
+    print('lambda = {}'.format(lmbda))
 
+    # construct explicit wave matrix for variable wave speed problem
+    # with open boundary conditions initially
+    lower = [delta**2*h(i - 0.5*deltax) for i in xs[1:-1]] + [2*lmbda**2]
+    main = [2*(1 + lmbda - lmbda**2)] + \
+            [2 - delta**2*(h(i + 0.5*deltax) + h(i - 0.5*deltax)) for i in xs[1:-1]] + \
+             [2*(1 + lmbda - lmbda**2)]
+    upper = [2*lmbda**2] + [delta**2*h(i + 0.5*deltax) for i in xs[1:-1]]
+
+    A_EW = tridiag(mx+1, lower, main, upper)
+    
+     # initial condition vectors
+    u = [np.zeros(xs.size) for i in range(mt+1)]
+    
+    U = wave(xs).copy()
+    
+    # set first two time steps
+    u[0] = U 
+    u[1] = 0.5*A_EW.dot(U)     
+   
+    # keep track of the first time the right side becomes non-zero
+    zero_right = True
+    
+    for j in range(1, mt):
+        u[j+1] = A_EW.dot(u[j]) - u[j-1]
+    
+        # correction for open boundary condition
+        u[j+1][mx] /= (1+2*lmbda)
+        
+        # switch from open to periodic boundary
+        if zero_right and u[j+1][mx] > 1e-5:
+            zero_right = False
+        
+        # correction for open boundary conditon on the left before 
+        # it becomes a periodic condition
+        if zero_right:
+            u[j+1][0] /= (1+2*lmbda)
+        else:
+            # periodic condition
+            u[j+1][0] = u[j+1][mx]
+    
+    return xs, u    
 
 def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
     """Add Neumann or Dirichlet boundary conditions"""

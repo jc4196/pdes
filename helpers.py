@@ -9,6 +9,10 @@ import numpy as np
 import sympy as sp
 from sympy.abc import x, t
 
+def get_error(xs, uT, u_exact):
+    u = numpify(u_exact, 'x')
+    return np.linalg.norm(u(xs) - uT)
+
 def tridiag(N, lower, main, upper):
     """
     Create an NxN tridiagonal matrix with diagonals lower, upper and main.
