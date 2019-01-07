@@ -19,7 +19,7 @@ def tridiag(N, lower, main, upper):
                         shape=(N, N),
                         format='csr')
 
-def numpify(fn, num_args):
+def numpify(fn, args):
     """
     Create a vectorized function from either a constant or a sympy function.
     If a function is neither of these the original function is returned.
@@ -30,10 +30,10 @@ def numpify(fn, num_args):
     """
     # first check if f is constant
     if isinstance(fn, (int, float)):
-        if num_args == 1:
+        if args == 'x' or args == 't':
             return np.vectorize(lambda y: fn,
                                 otypes=[np.float32])
-        elif num_args == 2:
+        elif args == 'x t':
             return np.vectorize(lambda y, s: fn,
                                 otypes=[np.float32])
         else:
@@ -42,14 +42,15 @@ def numpify(fn, num_args):
     else:
         # then assume a sympy function and try to vectorize it
         try:
-            if num_args == 1:
+            if args == 'x':
                 return sp.lambdify(x, fn, 'numpy')
-                
-            elif num_args == 2:
+            elif args == 't':
+                return sp.lambdify(t, fn, 'numpy')
+            elif args == 'x t':
                 return sp.lambdify((x,t), fn, 'numpy')
             else:
                 raise Exception(
-                        'Only functions of 1 or 2 variables are permitted')
+                        'Only functions of x, t or x and t are permitted')
         except:
             # otherwise just return the original function
             return fn

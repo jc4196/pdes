@@ -6,9 +6,10 @@ Created on Fri Nov 30 21:34:47 2018
 """
 
 import parabolicpde as pp
+import hyperbolicpde as hp
 from boundary import Dirichlet, Neumann, Mixed
-from pdeproblem import HyperbolicProblem, Open, Periodic, TsunamiProblem
-from hyperbolicsolvers import explicitsolve, implicitsolve
+#from pdeproblem import Open, Periodic, TsunamiProblem
+#from hyperbolicsolvers import explicitsolve, implicitsolve
 from visualizations import plot_solution
 
 from sympy import *
@@ -113,31 +114,31 @@ def example8():
 ## Wave Equation Problems ##
 
 def example9():
-    dp9 = HyperbolicProblem()
+    wp9 = hp.HyperbolicProblem()
     #dp9.pprint()
     
     u= cos(pi*t)*sin(pi*x)
 
-    uT, error = dp9.solve_at_T(1, mx, mt, scheme,
+    uT, error = wp9.solve_at_T(1, mx, mt, scheme,
                                u_exact=u, title='Wave Problem 1')
     print('Error = {}'.format(error))
     
 def example10():
     A = 1
     
-    dp10 = HyperbolicProblem(ix=0, iv=A*sin(pi*x))
+    wp10 = hp.HyperbolicProblem(ix=0, iv=A*sin(pi*x))
     
     u = (A/pi)*sin(pi*t)*sin(pi*x)
 
     
-    uT, error = dp10.solve_at_T(1.5, mx, mt, scheme,
+    uT, error = wp10.solve_at_T(1.5, mx, mt, scheme,
                                 u_exact=u, title="Wave Problem 2")
     print('Error = {}'.format(error))
    
 def example11():
     # Wave equation problem with homogeneous Neumann boundary conditions
     A = 1
-    wp11 = HyperbolicProblem(ix=A*cos(pi*x), iv=0, lbc=Neumann(0,0), rbc=Neumann(1,0))
+    wp11 = hp.HyperbolicProblem(ix=A*cos(pi*x), iv=0, lbc=Neumann(0,0), rbc=Neumann(1,0))
     
     u = A*cos(pi*t)*cos(pi*x)
     
@@ -147,7 +148,7 @@ def example11():
 def example12():
     # Wave equation with homogeneous Neumann boundary conditions
     A = 1
-    wp12 = HyperbolicProblem(ix=0, iv=A*cos(pi*x), lbc=Neumann(0,0), rbc=Neumann(0,0))
+    wp12 = hp.HyperbolicProblem(ix=0, iv=A*cos(pi*x), lbc=Neumann(0,0), rbc=Neumann(0,0))
     
     u = (A/pi)*sin(pi*t)*cos(pi*x)
     
@@ -156,24 +157,24 @@ def example12():
     
 
 def example13():
-    wp13 = HyperbolicProblem(ix=sin(pi*x/2), iv=0, lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
+    wp13 = hp.HyperbolicProblem(ix=sin(pi*x/2), iv=0, lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
 
     uT, error = wp13.solve_at_T(1.1, mx, mt, scheme, title='Wave Problem 5')
     
 def example14():
     # non-homogeneous Dirichlet boundary conditions
-    wp14 = HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
+    wp14 = hp.HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(0.5, mx, mt, scheme, title='Wave Problem 6')
  
 def example15():
     # travelling wave with open boundaries
-    wp15 = HyperbolicProblem(L=10, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Open(0, 1), rbc=Open(10, 1))
+    wp15 = hp.HyperbolicProblem(L=10, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Open(0, 1), rbc=Open(10, 1))
     #wp15.pprint()
     uT, error = wp15.solve_at_T(6, mx, mt, scheme, title='Travelling Wave')
 
 def example16():
     # travelling wave with periodic boundary, left wave leaves the domain
-    wp16 = HyperbolicProblem(L=20, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Periodic(0, 20), rbc=Open(20, 1))
+    wp16 = hp.HyperbolicProblem(L=20, ix = exp(-(x-5)**2/0.5), iv=0, lbc=Periodic(0, 20), rbc=Open(20, 1))
     #wp15.pprint()
     uT, error = wp16.solve_at_T(17, mx, mt, scheme, title='Travelling Wave')
 
@@ -193,30 +194,30 @@ def example17():
     
 mx = 20
 mt = 500
-scheme = pp.backwardeuler2
+scheme = pp.backwardeuler
 
-#example1()    
-#example2()
-#example3()
-example3b()
-#example4()
-#example5()
-#example6()
-#example7()
-#example8()
+example1()    
+example2()
+example3()
+#example3b()
+example4()
+example5()
+example6()
+example7()
+example8()
 
 ## Wave Equation Problems ##
 
-scheme = explicitsolve
+scheme = hp.explicitsolve
 mx = 200
 mt = 800
 
-#example9()
-#example10()
-#example11()
-#example12()
-#example13()
-#example14()
+example9()
+example10()
+example11()
+example12()
+example13()
+example14()
 
 ## travelling waves
 

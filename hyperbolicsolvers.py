@@ -60,7 +60,27 @@ def explicitsolve(mx, mt, L, T,
                   c, source,
                   ix, iv,
                   lbc, rbc, lbctype, rbctype):
-    """Solve a wave equation problem with the given spacing"""
+        """
+        Solve the wave equation at time T with grid spacing mx x mt. Use 
+        an explicit method. Conditionally stable for lambda <= 1.
+        
+        Parameters
+        mx       number of grid points in space
+        mt       number of grid points in time
+        L        length of the interval
+        T        time to stop the integration
+        c        wave speed
+        ix       initial displacement function
+        iv       initial velocity function
+        lbc      left boundary condition function
+        rbc      right boundary condition function
+        lbctype  left boundary type eg. 'Dirichlet'
+        rbctype  right boundary type
+        
+        Returns
+        xs       the points at which the solution is found
+        uT       the solution at time T
+    """
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, c)
     print("lambda = %f" % lmbda)
     # Construct explicit wave matrix

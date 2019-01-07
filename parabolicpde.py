@@ -70,8 +70,6 @@ class ParabolicProblem:
         """
         
         # solve the PDE by the given scheme
-        print(self.rbc.type)
-        print(self.lbc.type)
         xs, uT =  scheme(mx, mt, self.L, T,
                          self.kappa, self.source, self.ic,
                          self.lbc.rhs, self.rbc.rhs,
@@ -82,9 +80,8 @@ class ParabolicProblem:
             uTsym = u_exact.subs({kappa: self.kappa,
                                   L: self.L,
                                   t: T})
-            # vectorize the remaining function of x for plotting and
-            # calculating error
-            u = numpify(uTsym, 1)
+            u = numpify(uTsym, 'x')
+            # use L2 norm to calculate absolute error
             error = np.linalg.norm(u(xs) - uT)            
             if plot:       
                 plot_solution(xs, uT, u, title=title,
@@ -109,8 +106,8 @@ def forwardeuler(mx, mt, L, T,
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
     print('lambda = {}'.format(lmbda))
     # make sure these functions are vectorized
-    ic, lbc, rbc, source = numpify_many((ic, 1), (lbc, 1),
-                                        (rbc, 1), (source, 2))
+    ic, lbc, rbc, source = numpify_many((ic, 'x'), (lbc, 't'),
+                                        (rbc, 't'), (source, 'x t'))
     
     # Construct forward Euler matrix
     A_FE = tridiag(mx+1, lmbda, 1-2*lmbda, lmbda)
@@ -164,8 +161,8 @@ def backwardeuler(mx, mt, L, T,
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
  
     # make sure these functions are vectorized
-    ic, lbc, rbc, source = numpify_many((ic, 1), (lbc, 1),
-                                        (rbc, 1), (source, 2))
+    ic, lbc, rbc, source = numpify_many((ic, 'x'), (lbc, 't'),
+                                        (rbc, 't'), (source, 'x t'))
 
     # Construct backward Euler matrix
     B_FE = tridiag(mx+1, -lmbda, 1+2*lmbda, -lmbda)
@@ -210,15 +207,17 @@ def backwardeuler(mx, mt, L, T,
 def backwardeuler2(mx, mt, L, T, 
                   kappa, source,
                   ic, lbc, rbc, lbc_ab, rbc_ab):
-    """second implementation of backward Euler that takes mixed boundary
-    conditions"""
+    """
+    Second implementation of backward Euler that takes mixed boundary
+    conditions
+    """
     
     # initialise   parameters   
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
  
     # make sure these functions are vectorized
-    ic, lbc, rbc, source = numpify_many((ic, 1), (lbc, 1),
-                                        (rbc, 1), (source, 2))
+    ic, lbc, rbc, source = numpify_many((ic, 'x'), (lbc, 't'),
+                                        (rbc, 't'), (source, 'x t'))
     
     # Parameters needed to construct the matrix
     alpha1, beta1 = lbc_ab
@@ -265,8 +264,8 @@ def cranknicholson(mx, mt, L, T,
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
  
     # make sure these functions are vectorized
-    ic, lbc, rbc, source = numpify_many((ic, 1), (lbc, 1),
-                                        (rbc, 1), (source, 2))
+    ic, lbc, rbc, source = numpify_many((ic, 'x'), (lbc, 't'),
+                                        (rbc, 't'), (source, 'x t'))
     
     # Construct Crank-Nicholson matrices
     A_CN = tridiag(mx+1, -0.5*lmbda, 1+lmbda, -0.5*lmbda)
