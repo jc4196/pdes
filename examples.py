@@ -5,14 +5,15 @@ Created on Fri Nov 30 21:34:47 2018
 @author: james
 """
 
-import parabolicpde as pp
-import hyperbolicpde as hp
+from parabolicpde import ParabolicProblem
+from hyperbolicpde import HyperbolicProblem
+from ellipticpde import EllipticProblem
 from boundary import Dirichlet, Neumann, Mixed
 
 from visualizations import plot_solution
 
 from sympy import *
-from sympy.abc import x, t
+from sympy.abc import x, y, t
 import numpy as np
 
 from IPython.display import display
@@ -24,7 +25,7 @@ init_printing()
 
 def example1():
     # Example 1 (These options are the defaults)
-    dp1 = pp.ParabolicProblem()
+    dp1 = ParabolicProblem()
     #dp1.pprint('Diffusion Example 1')
     
     # exact solution
@@ -42,7 +43,7 @@ def example1():
 def example2():
     # Example 2 (another frequency in the initial condition)
       
-    dp2 = pp.ParabolicProblem(ic=sin(pi*x) + 0.5*sin(3*pi*x))
+    dp2 = ParabolicProblem(ic=sin(pi*x) + 0.5*sin(3*pi*x))
     #dp2.pprint('Diffusion Example 2')
     
     # exact solution
@@ -54,18 +55,18 @@ def example3():
     # Example 3 (new boundary condition)
     # u(1,t) = 1
 
-    dp3 = pp.ParabolicProblem(rbc= Dirichlet(1,1))
+    dp3 = ParabolicProblem(rbc= Dirichlet(1,1))
     #dp3.pprint('Diffusion Example 3')
     uT, err = dp3.solve_at_T(0.02, mx, mt, scheme, title='Example 3')
 
 def example3b():
     # Same as example 3 but using mixed boundary conditions
-    dp3b = pp.ParabolicProblem(lbc=Mixed(0, (1,0,0)), rbc=Mixed(1, (1,0,1)))
-    uT, err = dp3b.solve_at_T(0.02, mx, mt, pp.backwardeuler2, title='Example 3b')
+    dp3b = ParabolicProblem(lbc=Mixed(0, (1,0,0)), rbc=Mixed(1, (1,0,1)))
+    uT, err = dp3b.solve_at_T(0.02, mx, mt, 'BE2', title='Example 3b')
     
 def example4():
     # Example 4 (Initial condition)   
-    dp4 = pp.ParabolicProblem(ic=x)
+    dp4 = ParabolicProblem(ic=x)
     #dp4.pprint('Diffusion Problem 4')
     
     u_first = (2/pi)*exp(-pi**2*t)*sin(pi*x)
@@ -74,7 +75,7 @@ def example4():
 def example5():
     # Example 5 (Neumann boundary condition)
 
-    dp5 = pp.ParabolicProblem(lbc=Neumann(0,0), rbc=Neumann(1,0), ic=x)
+    dp5 = ParabolicProblem(lbc=Neumann(0,0), rbc=Neumann(1,0), ic=x)
     #dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
@@ -84,7 +85,7 @@ def example5():
 
 def example6():
     # Example 6 (constant source)
-    dp6 = pp.ParabolicProblem(source=1, rbc=Dirichlet(1,1), ic=0)
+    dp6 = ParabolicProblem(source=1, rbc=Dirichlet(1,1), ic=0)
     #dp6.pprint('Diffusion Problem 6')
     
     # steady state
@@ -94,7 +95,7 @@ def example6():
 def example7():
     # Example 6 (source variable in x)
     
-    dp7 = pp.ParabolicProblem(source=sin(3*pi*x), ic=sin(pi*x))
+    dp7 = ParabolicProblem(source=sin(3*pi*x), ic=sin(pi*x))
     #dp7.pprint('Diffusion Problem 7')
     
     u = exp(-(pi**2)*t)*sin(pi*x) + \
@@ -103,26 +104,26 @@ def example7():
     dp7.solve_at_T(0.4, mx, mt, scheme, u_exact = u)
 
 def example8():
-    dp8 = pp.ParabolicProblem(ic=4*sin(3*pi*x))
+    dp8 = ParabolicProblem(ic=4*sin(3*pi*x))
     #dp8.pprint('Diffusion Problem 8')
     
     u = 4*sin(3*pi*x)*exp(-(3*pi)**2*t)
     dp8.solve_at_T(0.1, mx, mt, scheme, u_exact=u)
 
 def mixedexample():
-    dpmixed = pp.ParabolicProblem(lbc=Mixed(0, (1,0,0)),
+    dpmixed = ParabolicProblem(lbc=Mixed(0, (1,0,0)),
                                   rbc=Mixed(1, (1,1,0)),
                                   ic=x)
     
     u = 0.24*exp(-4*t)*sin(2*x) + 0.22*exp(-24*t)*sin(4.9*x)
-    uT, err = dpmixed.solve_at_T(4, mx, mt, pp.backwardeuler2, u_exact=u)
+    uT, err = dpmixed.solve_at_T(4, mx, mt, 'BE2', u_exact=u)
     print(err)
     
     
 ## Wave Equation Problems ##
 
 def example9():
-    wp9 = hp.HyperbolicProblem()
+    wp9 = HyperbolicProblem()
     #dp9.pprint()
     
     u= cos(pi*t)*sin(pi*x)
@@ -134,7 +135,7 @@ def example9():
 def example10():
     A = 1
     
-    wp10 = hp.HyperbolicProblem(ix=0, iv=A*sin(pi*x))
+    wp10 = HyperbolicProblem(ix=0, iv=A*sin(pi*x))
     
     u = (A/pi)*sin(pi*t)*sin(pi*x)
 
@@ -146,7 +147,7 @@ def example10():
 def example11():
     # Wave equation problem with homogeneous Neumann boundary conditions
     A = 1
-    wp11 = hp.HyperbolicProblem(ix=A*cos(pi*x), iv=0, lbc=Neumann(0,0), rbc=Neumann(1,0))
+    wp11 = HyperbolicProblem(ix=A*cos(pi*x), iv=0, lbc=Neumann(0,0), rbc=Neumann(1,0))
     
     u = A*cos(pi*t)*cos(pi*x)
     
@@ -156,7 +157,7 @@ def example11():
 def example12():
     # Wave equation with homogeneous Neumann boundary conditions
     A = 1
-    wp12 = hp.HyperbolicProblem(ix=0, iv=A*cos(pi*x), lbc=Neumann(0,0), rbc=Neumann(0,0))
+    wp12 = HyperbolicProblem(ix=0, iv=A*cos(pi*x), lbc=Neumann(0,0), rbc=Neumann(0,0))
     
     u = (A/pi)*sin(pi*t)*cos(pi*x)
     
@@ -165,49 +166,48 @@ def example12():
     
 
 def example13():
-    wp13 = hp.HyperbolicProblem(ix=sin(pi*x/2), iv=0, lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
+    wp13 = HyperbolicProblem(ix=sin(pi*x/2), iv=0, lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
 
     uT, error = wp13.solve_at_T(1.1, mx, mt, scheme, title='Wave Problem 5')
     
 def example14():
     # non-homogeneous Dirichlet boundary conditions
-    wp14 = hp.HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
+    wp14 = HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
     uT, error = wp14.solve_at_T(0.5, mx, mt, scheme, title='Wave Problem 6')
- 
 
-def tsunami():
-    # travelling wave with variable seabed
-    L=50
-    h0=8
-    wave = 20*exp(-(x-5)**2/3)
-    seabed = 7*exp(-(x-25)**2/50)
-    #seabed = 0
+def example15():
+    # elliptic example
+    mx = 40              # number of gridpoints in x
+    my = 20              # number of gridpoints in y
+    maxerr = 1e-4        # target error
+    maxcount = 1000      # maximum number of iteration steps
+    omega = 1.5
+    ep1 = EllipticProblem()
+    ep1.pprint(title='Elliptic Example')
     
-    wp17 = hp.TsunamiProblem(L, h0, wave, seabed)
+    u = sin(pi*x/2)*sinh(pi*y/2)/sinh(pi/2)
+    ep1.solve(mx, my, maxcount, maxerr, omega, u)
     
-    # T = 40 makes a good animation
-    uT = wp17.solve_at_T(8.5, 250, 600, plot=True, animate=False)
- 
 ## Diffusion Equation Problems ##
     
 mx = 30
 mt = 500
-scheme = pp.cranknicholson
+scheme = 'CN'
 
-#example1()    
-#example2()
-#example3()
-#example3b()
-#example4()
-#example5()
-#example6()
-#example7()
-#example8()
-#mixedexample()
+example1()    
+example2()
+example3()
+example3b()
+example4()
+example5()
+example6()
+example7()
+example8()
+mixedexample()
 
 ## Wave Equation Problems ##
 
-scheme = hp.implicitsolve
+scheme = 'I'
 mx = 200
 mt = 800
 
@@ -218,6 +218,5 @@ example12()
 example13()
 example14()
 
-## tsunami
-
-#tsunami()
+## Elliptic Equation Problems ##
+example15()

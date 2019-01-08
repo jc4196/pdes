@@ -16,6 +16,7 @@ from boundary import Dirichlet
 from helpers import tridiag, numpify, numpify_many, get_error
 from visualizations import plot_solution
 
+
 class ParabolicProblem:
     """Object specifying a diffusion type problem of the form
     
@@ -30,8 +31,8 @@ class ParabolicProblem:
                  source=0):
         self.kappa = kappa    # Diffusion coefficient
         self.L = L            # Length of interval
-        self.lbc = lbc        # Left boundary condition as above
-        self.rbc = rbc        # Right boundary condition as above
+        self.lbc = lbc        # Left boundary condition object
+        self.rbc = rbc        # Right boundary condition object
         self.ic = ic          # Initial condition function h(x)
         self.source = source  # Source function f(x)
  
@@ -70,10 +71,10 @@ class ParabolicProblem:
         """
         
         # solve the PDE by the given scheme
-        xs, uT =  scheme(mx, mt, self.L, T,
-                         self.kappa, self.source, self.ic,
-                         self.lbc.rhs, self.rbc.rhs,
-                         self.lbc.type, self.rbc.type)
+        xs, uT =  (SCHEMES[scheme])(mx, mt, self.L, T,
+                                    self.kappa, self.source, self.ic,
+                                    self.lbc.rhs, self.rbc.rhs,
+                                    self.lbc.type, self.rbc.type)
         
         if u_exact:
             # substitute in the values of kappa, L and T
@@ -301,6 +302,11 @@ def cranknicholson(mx, mt, L, T,
     
     return xs, u_j
 
+# key for accessing schemes
+SCHEMES = {'FE': forwardeuler,
+           'BE': backwardeuler,
+           'BE2': backwardeuler2,  # takes mixed boundary conditions
+           'CN': cranknicholson}
 
 ## Extra functions ##
     

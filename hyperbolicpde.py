@@ -73,11 +73,11 @@ class HyperbolicProblem:
         err      the absolute error (if u_exact is given)
         """
         # solve the PDE at time T
-        xs, uT = scheme(mx, mt, self.L, T,
-                        self.c, self.source,
-                        self.ix, self.iv,
-                        self.lbc.rhs, self.rbc.rhs,
-                        self.lbc.type, self.rbc.type)
+        xs, uT = (SCHEMES[scheme])(mx, mt, self.L, T,
+                                   self.c, self.source,
+                                   self.ix, self.iv,
+                                   self.lbc.rhs, self.rbc.rhs,
+                                   self.lbc.type, self.rbc.type)
         if u_exact:
             # substitute in the values of c, L and t
             uTsym = u_exact.subs({c: self.c,
@@ -286,6 +286,8 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     
     return xs, u    
 
+SCHEMES = {'E': explicitsolve,
+           'I': implicitsolve}
 
 ## Extra Functions ##
 

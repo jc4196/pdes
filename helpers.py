@@ -7,7 +7,7 @@ Created on Sat Dec 15 11:05:29 2018
 from scipy import sparse
 import numpy as np
 import sympy as sp
-from sympy.abc import x, t
+from sympy.abc import x, t, y
 
 def get_error(xs, uT, u_exact):
     u = numpify(u_exact, 'x')
@@ -37,7 +37,7 @@ def numpify(fn, args):
         if args == 'x' or args == 't':
             return np.vectorize(lambda y: fn,
                                 otypes=[np.float32])
-        elif args == 'x t':
+        elif args == 'x t' or args == 'x y':
             return np.vectorize(lambda y, s: fn,
                                 otypes=[np.float32])
         else:
@@ -52,9 +52,11 @@ def numpify(fn, args):
                 return sp.lambdify(t, fn, 'numpy')
             elif args == 'x t':
                 return sp.lambdify((x,t), fn, 'numpy')
+            elif args == 'x y':
+                return sp.lambdify((x,y), fn, 'numpy')
             else:
                 raise Exception(
-                        'Only functions of x, t or x and t are permitted')
+                        'Only functions of 1 or 2 variables are permitted')
         except:
             # otherwise just return the original function
             return fn

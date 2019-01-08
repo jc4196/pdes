@@ -102,6 +102,7 @@ def num_iterations(omega):
     # set up the solution variables
     u_old = np.zeros((x.size,y.size))   # u at current time step
     u_new = np.zeros((x.size,y.size))   # u at next time step
+ 
     
     # intialise the boundary conditions, for both timesteps
     u_old[1:-1,0] = fB(x[1:-1])
@@ -116,9 +117,11 @@ def num_iterations(omega):
     while err>maxerr and count<maxcount:
         for j in range(1,my):
             for i in range(1,mx):
+                # calculate residual
                 R[i,j] = (u_new[i-1,j] + u_old[i+1,j] - \
                      2*(1+lambdasqr)*u_old[i,j] + \
                      lambdasqr*(u_new[i,j-1]+u_old[i,j+1]) )/(2*(1+lambdasqr))
+                # 
                 u_new[i,j] = u_old[i,j] + omega*R[i,j]
                 
         err = np.max(np.abs(u_new-u_old))
