@@ -73,7 +73,7 @@ class HyperbolicProblem:
         err      the absolute error (if u_exact is given)
         """
         # solve the PDE at time T
-        xs, uT = (SCHEMES[scheme])(mx, mt, self.L, T,
+        xs, uT, lmbda = (SCHEMES[scheme])(mx, mt, self.L, T,
                                    self.c, self.source,
                                    self.ix, self.iv,
                                    self.lbc.rhs, self.rbc.rhs,
@@ -93,7 +93,7 @@ class HyperbolicProblem:
             if plot:
                 plot_solution(xs, uT, title=title)            
         
-        return uT, error      
+        return uT, error, lmbda      
 
 class TsunamiProblem:
     def __init__(self, L, h0, wave, seabed):
@@ -172,7 +172,7 @@ def explicitsolve(mx, mt, L, T,
         # update u_jm1 and u_j
         u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
     
-    return xs, u_j
+    return xs, u_j, lmbda
 
 def implicitsolve(mx, mt, L, T,
                   c, source,
@@ -232,7 +232,7 @@ def implicitsolve(mx, mt, L, T,
         # update u_jm1 and u_j
         u_jm1[:], u_j[:] = u_j[:], u_jp1[:]
     
-    return xs, u_j
+    return xs, u_j, lmbda
 
 def tsunami_solve(mx, mt, L, T, h0, h, wave):
     """Variable wavespeed problem assumes periodic boundary on the left and 

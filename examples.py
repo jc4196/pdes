@@ -30,7 +30,8 @@ def example1():
     
     # exact solution
     u = exp(-(pi**2)*t)*sin(pi*x)
-    uT, err = dp1.solve_at_T(0.5, mx, mt, scheme, u_exact=u, title='Example 1')
+    uT, err, lmbda = dp1.solve_at_T(0.5, mx, mt, scheme,
+                                    u_exact=u, title='Example 1')
     print('{:.5f}'.format(err))
     # test of forward euler scheme
     # deltax = 0.1 -> mx = 10
@@ -57,12 +58,12 @@ def example3():
 
     dp3 = ParabolicProblem(rbc= Dirichlet(1,1))
     #dp3.pprint('Diffusion Example 3')
-    uT, err = dp3.solve_at_T(0.02, mx, mt, scheme, title='Example 3')
+    uT, err, lmbda = dp3.solve_at_T(0.02, mx, mt, scheme, title='Example 3')
 
 def example3b():
     # Same as example 3 but using mixed boundary conditions
     dp3b = ParabolicProblem(lbc=Mixed(0, (1,0,0)), rbc=Mixed(1, (1,0,1)))
-    uT, err = dp3b.solve_at_T(0.02, mx, mt, 'BE2', title='Example 3b')
+    uT, err, lmbda = dp3b.solve_at_T(0.02, mx, mt, 'BE2', title='Example 3b')
     
 def example4():
     # Example 4 (Initial condition)   
@@ -79,7 +80,7 @@ def example5():
     #dp5.pprint('Diffusion Problem 5')
      
     u_first = 0.5 - (4/pi**2)*exp(-pi**2*t)*cos(pi*x)
-    uT, err = dp5.solve_at_T(0.1, mx, mt, scheme,
+    uT, err, lmbda = dp5.solve_at_T(0.1, mx, mt, scheme,
                              u_exact=u_first, title='Example 5')
     print(err)
 
@@ -116,7 +117,7 @@ def mixedexample():
                                   ic=x)
     
     u = 0.24*exp(-4*t)*sin(2*x) + 0.22*exp(-24*t)*sin(4.9*x)
-    uT, err = dpmixed.solve_at_T(4, mx, mt, 'BE2', u_exact=u)
+    uT, err, lmbda = dpmixed.solve_at_T(4, mx, mt, 'BE2', u_exact=u)
     print(err)
     
     
@@ -128,9 +129,9 @@ def example9():
     
     u= cos(pi*t)*sin(pi*x)
 
-    uT, error = wp9.solve_at_T(1, mx, mt, scheme,
+    uT, err, lmbda = wp9.solve_at_T(1, mx, mt, scheme,
                                u_exact=u, title='Wave Problem 1')
-    print('Error = {}'.format(error))
+    print('Error = {}'.format(err))
     
 def example10():
     A = 1
@@ -140,40 +141,49 @@ def example10():
     u = (A/pi)*sin(pi*t)*sin(pi*x)
 
     
-    uT, error = wp10.solve_at_T(1.5, mx, mt, scheme,
+    uT, error, lmbda = wp10.solve_at_T(1.5, mx, mt, scheme,
                                 u_exact=u, title="Wave Problem 2")
     print('Error = {}'.format(error))
    
 def example11():
     # Wave equation problem with homogeneous Neumann boundary conditions
     A = 1
-    wp11 = HyperbolicProblem(ix=A*cos(pi*x), iv=0, lbc=Neumann(0,0), rbc=Neumann(1,0))
+    wp11 = HyperbolicProblem(ix=A*cos(pi*x), iv=0,
+                             lbc=Neumann(0,0), rbc=Neumann(1,0))
     
     u = A*cos(pi*t)*cos(pi*x)
     
-    uT, error = wp11.solve_at_T(2, mx, mt, scheme, u_exact=u, title='Wave Problem 3')
+    uT, error, lmbda = wp11.solve_at_T(2, mx, mt, scheme,
+                                       u_exact=u, title='Wave Problem 3')
     print('Error = {}'.format(error))
     
 def example12():
     # Wave equation with homogeneous Neumann boundary conditions
     A = 1
-    wp12 = HyperbolicProblem(ix=0, iv=A*cos(pi*x), lbc=Neumann(0,0), rbc=Neumann(0,0))
+    wp12 = HyperbolicProblem(ix=0, iv=A*cos(pi*x),
+                             lbc=Neumann(0,0), rbc=Neumann(0,0))
     
     u = (A/pi)*sin(pi*t)*cos(pi*x)
     
-    uT, error = wp12.solve_at_T(1.5, mx, mt, scheme, u_exact=u, title='Wave Problem 4')
+    uT, error, lmbda = wp12.solve_at_T(1.5, mx, mt, scheme,
+                                u_exact=u, title='Wave Problem 4')
     print('Error = {}'.format(error))
     
 
 def example13():
-    wp13 = HyperbolicProblem(ix=sin(pi*x/2), iv=0, lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
+    wp13 = HyperbolicProblem(ix=sin(pi*x/2), iv=0,
+                             lbc=Dirichlet(0,0), rbc=Dirichlet(1,1))
 
-    uT, error = wp13.solve_at_T(1.1, mx, mt, scheme, title='Wave Problem 5')
+    uT, error, lmbda = wp13.solve_at_T(1.1, mx, mt,
+                                       scheme, title='Wave Problem 5')
     
 def example14():
     # non-homogeneous Dirichlet boundary conditions
-    wp14 = HyperbolicProblem(ix=sin(pi*x), iv=0, lbc=Dirichlet(0, sin(pi*t)), rbc=Dirichlet(1,-sin(pi*t)))
-    uT, error = wp14.solve_at_T(0.5, mx, mt, scheme, title='Wave Problem 6')
+    wp14 = HyperbolicProblem(ix=sin(pi*x), iv=0,
+                             lbc=Dirichlet(0, sin(pi*t)),
+                             rbc=Dirichlet(1,-sin(pi*t)))
+    uT, error, lmbda = wp14.solve_at_T(0.5, mx, mt, scheme,
+                                       title='Wave Problem 6')
 
 def example15():
     # elliptic example

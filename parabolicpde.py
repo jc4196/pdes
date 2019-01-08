@@ -71,10 +71,10 @@ class ParabolicProblem:
         """
         
         # solve the PDE by the given scheme
-        xs, uT =  (SCHEMES[scheme])(mx, mt, self.L, T,
-                                    self.kappa, self.source, self.ic,
-                                    self.lbc.rhs, self.rbc.rhs,
-                                    self.lbc.type, self.rbc.type)
+        xs, uT, lmbda =  (SCHEMES[scheme])(mx, mt, self.L, T,
+                                           self.kappa, self.source, self.ic,
+                                           self.lbc.rhs, self.rbc.rhs,
+                                           self.lbc.type, self.rbc.type)
         
         if u_exact:
             # substitute in the values of kappa, L and T
@@ -91,7 +91,7 @@ class ParabolicProblem:
             if plot:
                 plot_solution(xs, uT, title=title)            
         
-        return uT, error
+        return uT, error, lmbda
     
 ## Schemes ##
         
@@ -104,7 +104,7 @@ def forwardeuler(mx, mt, L, T,
     
     # initialise     
     xs, ts, deltax, deltat, lmbda = initialise(mx, mt, L, T, kappa)
-    print('lambda = {}'.format(lmbda))
+
     # make sure these functions are vectorized
     ic, lbc, rbc, source = numpify_many((ic, 'x'), (lbc, 't'),
                                         (rbc, 't'), (source, 'x t'))
@@ -145,7 +145,7 @@ def forwardeuler(mx, mt, L, T,
         
         u_j[:] = u_jp1[:]
     
-    return xs, u_j
+    return xs, u_j, lmbda
 
       
 def backwardeuler(mx, mt, L, T, 
@@ -196,7 +196,8 @@ def backwardeuler(mx, mt, L, T,
         u_jp1[1:-1] += deltat*source(xs[1:-1], j + deltat)
         
         u_j[:] = u_jp1[:]
-    return xs, u_j
+        
+    return xs, u_j, lmbda
 
 
 def backwardeuler2(mx, mt, L, T, 
@@ -245,7 +246,7 @@ def backwardeuler2(mx, mt, L, T,
         # Update u_j
         u_j[:] = u_jp1[:]
          
-    return xs, u_j 
+    return xs, u_j, lmbda 
 
 
 def cranknicholson(mx, mt, L, T, 
@@ -300,7 +301,7 @@ def cranknicholson(mx, mt, L, T,
         
         u_j[:] = u_jp1[:]
     
-    return xs, u_j
+    return xs, u_j, lmbda
 
 # key for accessing schemes
 SCHEMES = {'FE': forwardeuler,
