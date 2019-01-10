@@ -44,19 +44,19 @@ class EllipticProblem:
         display(sp.Eq(u(x,0), self.bbc))
         display(sp.Eq(u(x,y).subs(y,self.Ly), self.tbc))
 
-    def solve(self, mx, my, maxcount, maxerr, omega, u_exact, plot=True):
+    def solve(self, mx, my, maxcount, maxerr, omega, u_exact= None, plot=True):
         """Solve Laplace's equation on a rectangle with Dirichlet 
         boundary conditions"""
-        return ellipticsolve(mx, my, self.Lx, self.Ly,
-                             self.lbc, self.rbc, self.tbc,
-                             self.bbc, maxcount, maxerr,
-                             omega, u_exact)
+        return SOR(mx, my, self.Lx, self.Ly,
+                   self.lbc, self.rbc, self.tbc,
+                   self.bbc, maxcount, maxerr,
+                   omega, u_exact=u_exact, plot=plot)
 
         
         
-def ellipticsolve(mx, my, Lx, Ly,
-                  lbc, rbc, tbc, bbc,
-                  maxcount, maxerr, omega, u_exact, plot=True):
+def SOR(mx, my, Lx, Ly,
+        lbc, rbc, tbc, bbc,
+        maxcount, maxerr, omega, u_exact, plot=True):
     """Solve Laplace's equation on a rectangle with Dirichlet boundary
     conditions, using the SOR method"""
     # set up the numerical environment variables
@@ -82,10 +82,11 @@ def ellipticsolve(mx, my, Lx, Ly,
     u_old[-1,1:-1] = rbc(ys[1:-1])
     u_new[:]=u_old[:]
     
-    # true solution values on the grid 
-    for i in range(0,mx+1):
-        for j in range(0,my+1):
-            u_true[i,j] = u_exact(xs[i],ys[j])
+    if u_exact:
+        # true solution values on the grid 
+        for i in range(0,mx+1):
+            for j in range(0,my+1):
+                u_true[i,j] = u_exact(xs[i],ys[j])
             
 
     count = 1
@@ -100,13 +101,16 @@ def ellipticsolve(mx, my, Lx, Ly,
                      lambdasqr*(u_new[i,j-1]+u_old[i,j+1]) )/(2*(1+lambdasqr))
                 # SOR step
                 u_new[i,j] = u_old[i,j] + omega*R[i,j]
-                
+        
         err = np.max(np.abs(u_new-u_old))
         u_old[:] = u_new[:]
         count=count+1
-        
-    # calculate the error, compared to the true solution    
-    err_true = np.max(np.abs(u_new[1:-1,1:-1]-u_true[1:-1,1:-1]))
+    
+    if u_exact:
+        # calculate the error, compared to the true solution    
+        err_true = np.max(np.abs(u_new[1:-1,1:-1]-u_true[1:-1,1:-1]))
+    else:
+        err_true = 0
     
     if plot:
         # plot the resulting solution
@@ -118,6 +122,6 @@ def ellipticsolve(mx, my, Lx, Ly,
         plt.xlabel('x'); plt.ylabel('y')
         plt.show()
         
-    return u_new, count, err_true
+    return u_new, count, err, err_true
     
     

@@ -6,16 +6,18 @@ Created on Sun Jan  6 11:46:18 2019
 """
 import numpy as np
 from sympy import *
-from sympy.abc import x, t
+from sympy.abc import x,y, t
 
 from parabolicpde import ParabolicProblem, backwardeuler
 from hyperbolicpde import HyperbolicProblem
+from ellipticpde import EllipticProblem
 
 from visualizations import plot_solution
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize_scalar
 
 ## Worksheet 1 ##
-
+## 
 ## Q2 (a) 
 
 def solver_demonstration():
@@ -24,14 +26,12 @@ def solver_demonstration():
     def uI(x):
         return np.sin(np.pi*x/L)
     
-    def u(x):
-        return np.exp(-(np.pi**2)*T)*np.sin(np.pi*x)
       
     xs, uT, lmbda = backwardeuler(mx, mt, L, T,
                                   1, 0,
                                   uI, 0, 0, 'Dirichlet', 'Dirichlet')
 
-    plot_solution(xs, uT, uexact=u)
+    plot_solution(xs, uT)
    
 ## Q3 
     
@@ -91,6 +91,55 @@ def tsunami():
     # T = 40 makes a good animation
     uT = wp17.solve_at_T(8.5, 250, 600, plot=True, animate=False)
     
+def sor_test():
+    # elliptic example
+    mx = 40              # number of gridpoints in x
+    my = 20              # number of gridpoints in y
+    maxerr = 1e-4        # target error
+    maxcount = 1000      # maximum number of iteration steps
+    omega = 1.5
+    ep1 = EllipticProblem()
+    
+    u = sin(pi*x/2)*sinh(pi*y/2)/sinh(pi/2)
+    u_new, count, error, err_true = ep1.solve(mx, my, maxcount, maxerr, omega, u)
+    print('Final iteration error = {}\nMax error = {}\nno. of iterations = {}'.format(error, err_true, count))
+    
+def omegas_test():
+    omegas = np.linspace(1,2,30)
+    mx = 40              # number of gridpoints in x
+    my = 20              # number of gridpoints in y
+    maxerr = 1e-4        # target error
+    maxcount = 1000      # maximum number of iteration steps
+    omega = 1.5
+    ep = EllipticProblem()  
+    counts = []
+    
+    for omega in omegas:
+        _,count,_,_ = ep.solve(mx, my, maxcount, maxerr, omega, plot=False)
+        counts.append(count)
+    
+    plt.plot(omegas, counts)
+    plt.xlabel(r'$\omega$')
+    plt.ylabel('No. of iterations')
+    plt.show()
+    
+def min_omega():
+    mx = 40              # number of gridpoints in x
+    my = 20              # number of gridpoints in y
+    maxerr = 1e-4        # target error
+    maxcount = 1000      # maximum number of iteration steps
+    ep = EllipticProblem()   
+    
+    def num_iterations(omega):
+        _,count,_,_=ep.solve(mx, my, maxcount, maxerr, omega, plot=False)
+        return count
+    
+    
+    res = minimize_scalar(num_iterations, bracket=(1,2), tol=1e-3)
+    print(res)
 solver_demonstration()
 #error_analysis()
 #stability_check()
+#sor_test()
+#omegas_test()
+#min_omega()
