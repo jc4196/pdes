@@ -3,6 +3,11 @@
 Created on Fri Nov 30 21:34:47 2018
 
 @author: james
+
+This file is more attractively presented in the Jupyter notebook
+
+'Examples.ipynb'
+
 """
 
 from parabolicpde import ParabolicProblem

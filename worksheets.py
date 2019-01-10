@@ -3,6 +3,11 @@
 Created on Sun Jan  6 11:46:18 2019
 
 @author: james
+
+This file is more attractively presented in the Jupyter notebook 
+
+'Worksheets.ipynb'.
+
 """
 import numpy as np
 from sympy import *
