@@ -33,13 +33,6 @@ def example1():
     uT, err, lmbda = dp1.solve_at_T(0.5, mx, mt, scheme,
                                     u_exact=u, title='Example 1')
     print('{:.5f}'.format(err))
-    # test of forward euler scheme
-    # deltax = 0.1 -> mx = 10
-    # deltat 
-    #mt = 5*np.logspace(2, 5, 4, dtype=np.int32)
-    #print(mt)
-    #errors = [dp1.error_at_T(0.5, 10, n, u, scheme=forwardeuler) for n in mt]
-    #print(errors)
     
 def example2():
     # Example 2 (another frequency in the initial condition)
@@ -129,9 +122,9 @@ def example9():
     
     u= cos(pi*t)*sin(pi*x)
 
-    uT, err, lmbda = wp9.solve_at_T(1, mx, mt, scheme,
+    uT, error, lmbda = wp9.solve_at_T(1, mx, mt, scheme,
                                u_exact=u, title='Wave Problem 1')
-    print('Error = {}'.format(err))
+    print('Error = {}'.format(error))
     
 def example10():
     A = 1
@@ -204,20 +197,20 @@ mx = 30
 mt = 500
 scheme = 'CN'
 
-example1()    
-example2()
-example3()
-example3b()
-example4()
-example5()
-example6()
-example7()
-example8()
-mixedexample()
+#example1()    
+#example2()
+#example3()
+#example3b()
+#example4()
+#example5()
+#example6()
+#example7()
+#example8()
+#mixedexample()
 
 ## Wave Equation Problems ##
 
-scheme = 'I'
+scheme = 'E'
 mx = 200
 mt = 800
 
@@ -229,4 +222,4 @@ example13()
 example14()
 
 ## Elliptic Equation Problems ##
-example15()
+#example15()

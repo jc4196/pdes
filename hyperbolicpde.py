@@ -55,7 +55,8 @@ class HyperbolicProblem:
         display(sp.Eq(u(x,t).diff(x).subs(t,0), self.iv))
         
     
-    def solve_at_T(self, T, mx, mt, scheme, plot=True, u_exact=None, title=''):
+    def solve_at_T(self, T, mx, mt, scheme,
+                   plot=True, u_exact=None, norm='L2', title=''):
         """
         Solve the wave equation at time T with grid spacing mx x mt.
         
@@ -84,7 +85,7 @@ class HyperbolicProblem:
                                   L: self.L,
                                   t: T})
             # use L2 norm to calculate absolute error
-            error = get_error(xs, uT, uTsym)
+            error = get_error(xs, uT, uTsym, norm=norm)
             if plot:
                 plot_solution(xs, uT, uTsym, title=title,
                               uexacttitle=r'${}$'.format(sp.latex(uTsym)))            
@@ -151,7 +152,7 @@ def explicitsolve(mx, mt, L, T,
     u_jp1 = np.zeros(xs.size)        
     
     for j in ts[1:-1]:
-        u_jp1 = A_EW.dot(u_j) - u_jm1
+        u_jp1[a:b] = A_EW[a:b,a:b].dot(u_j[a:b]) - u_jm1[a:b]
 
         addboundaries(u_jp1, lbctype, rbctype,
                       lmbda**2*lbc(j - deltat),
@@ -211,7 +212,7 @@ def implicitsolve(mx, mt, L, T,
     v = np.zeros(xs.size)        
     
     for j in ts[1:-1]:
-        v = B_IW.dot(u_jm1) + 2*u_j
+        v[a:b] = B_IW[a:b,a:b].dot(u_jm1[a:b]) + 2*u_j[a:b]
  
         addboundaries(v, lbctype, rbctype,
                       0.5*lmbda**2*(lbc(j) + lbc(j + deltat)),
@@ -219,7 +220,7 @@ def implicitsolve(mx, mt, L, T,
                        -lmbda**2*deltax*(lbc(j) + lbc(j + deltat)),
                       lmbda**2*deltax*(rbc(j) + rbc(j + deltat)))
 
-        u_jp1 = spsolve(A_IW, v)
+        u_jp1[a:b] = spsolve(A_IW[a:b,a:b], v[a:b])
         
         if lbctype == 'Dirichlet':
             u_jp1[0] = lbc(j + deltat)
@@ -241,8 +242,6 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     
     h, wave = numpify_many((h, 'x'), (wave,'x'))
     delta = deltat/deltax
-    
-    print('lambda = {}'.format(lmbda))
 
     # construct explicit wave matrix for variable wave speed problem
     # with open boundary conditions initially
@@ -286,6 +285,7 @@ def tsunami_solve(mx, mt, L, T, h0, h, wave):
     
     return xs, u    
 
+# key for accessing schemes
 SCHEMES = {'E': explicitsolve,
            'I': implicitsolve}
 
@@ -296,16 +296,14 @@ def addboundaries(u, lbctype, rbctype, D1, Dmxm1, N0, Nmx):
     if lbctype == 'Neumann':
         u[0] += N0
     elif lbctype == 'Dirichlet':
-        pass
-        #u[1] += D1
+        u[1] += D1
     else:
         raise Exception('That boundary condition is not implemented')
     
     if rbctype == 'Neumann':
         u[-1] += Nmx
     elif rbctype == 'Dirichlet': 
-        #u[-2] += Dmxm1
-        pass
+        u[-2] += Dmxm1
     else:
         raise Exception('That boundary condition is not implemented')
 

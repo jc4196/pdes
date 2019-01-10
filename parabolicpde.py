@@ -52,7 +52,8 @@ class ParabolicProblem:
         # show the initial condition
         display(sp.Eq(u(x,0), self.ic))
     
-    def solve_at_T(self, T, mx, mt, scheme, u_exact=None, plot=True, title=''):
+    def solve_at_T(self, T, mx, mt, scheme,
+                   u_exact=None, plot=True, norm='L2', title=''):
         """
         Solve the diffusion equation at time T with grid spacing mx x mt.
         
@@ -81,8 +82,8 @@ class ParabolicProblem:
             uTsym = u_exact.subs({kappa: self.kappa,
                                   L: self.L,
                                   t: T})
-            # use L2 norm to calculate absolute error
-            error = get_error(xs, uT, uTsym)            
+            # use L-inf norm to calculate absolute error
+            error = get_error(xs, uT, uTsym, norm=norm)            
             if plot:       
                 plot_solution(xs, uT, uTsym, title=title,
                               uexacttitle=r'${}$'.format(sp.latex(uTsym)))            

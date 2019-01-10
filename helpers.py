@@ -9,9 +9,16 @@ import numpy as np
 import sympy as sp
 from sympy.abc import x, t, y
 
-def get_error(xs, uT, u_exact):
+def get_error(xs, uT, u_exact, norm='L2'):
+    # calculate l-inf norm of calculated value of u and exact value
     u = numpify(u_exact, 'x')
-    return np.linalg.norm(u(xs) - uT)
+    
+    if norm == 'L2':
+        return np.linalg.norm(u(xs)- uT)
+    elif norm == 'Linf':
+        return np.max(np.abs(u(xs)-uT))
+    else:
+        raise Exception('Norm type not implemented')
 
 def tridiag(N, lower, main, upper):
     """
@@ -75,19 +82,5 @@ def numpify_many(*fns):
 
     return np_fns
             
-def vectorize_xfn(*xs):
-    fns = []
-    for x in xs:         
-        if isinstance(x, (int, float)):
-            fns.append(np.vectorize(lambda y: x, otypes=[np.float]))
-        else:
-            fns.append(x)
-    return fns
-
-def vectorize_xtfn(x):
-    if isinstance(x, (int, float)):
-        return np.vectorize(lambda y, t: x, otypes=[np.float])
-    else:
-        return x
     
 
