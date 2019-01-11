@@ -142,9 +142,10 @@ def min_omega():
     
     res = minimize_scalar(num_iterations, bracket=(1,2), tol=1e-3)
     print(res)
+
 solver_demonstration()
-#error_analysis()
-#stability_check()
-#sor_test()
-#omegas_test()
-#min_omega()
+error_analysis()
+stability_check()
+sor_test()
+omegas_test()
+min_omega()

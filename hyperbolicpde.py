@@ -84,7 +84,7 @@ class HyperbolicProblem:
             uTsym = u_exact.subs({c: self.c,
                                   L: self.L,
                                   t: T})
-            # use L2 norm to calculate absolute error
+            # calculate absolute error
             error = get_error(xs, uT, uTsym, norm=norm)
             if plot:
                 plot_solution(xs, uT, uTsym, title=title,

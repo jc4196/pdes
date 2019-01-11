@@ -82,7 +82,7 @@ class ParabolicProblem:
             uTsym = u_exact.subs({kappa: self.kappa,
                                   L: self.L,
                                   t: T})
-            # use L-inf norm to calculate absolute error
+            # calculate absolute error
             error = get_error(xs, uT, uTsym, norm=norm)            
             if plot:       
                 plot_solution(xs, uT, uTsym, title=title,
