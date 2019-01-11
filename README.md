@@ -1,29 +1,29 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
-
 ### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+This repository contains a submission for Scientific Computing EMAT30008: using finite difference methods to
+solve partial differential equations.
 
 ### How do I get set up? ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+See the report "report.pdf" for a description of the software, along with the Jupyter notebooks
+"Examples.ipynb" and "Solutions.ipynb" that go with it.
 
-### Contribution guidelines ###
+The bulk of the code belongs in 
 
-* Writing tests
-* Code review
-* Other guidelines
+parabolicpde.py - parabolic equation solvers and objects
+hyperbolicpde.py - hyperbolic equation solvers and objects
+ellipticpde.py - elliptic equation solvers and objects
 
-### Who do I talk to? ###
+Extra functions can be found in 
 
-* Repo owner or admin
-* Other community or team contact
+boundary.py - boundary condition objects
+visualizations.py - tools for plotting/animating
+helpers.py - useful functions that don't live anywhere else
+
+The files worksheets.py and examples.py were used in the process of verifying the solvers and answering
+the worksheet questions. Most of this code ended up in the two notebooks.
+
+James Cass
+jc4196@bristol.ac.uk
