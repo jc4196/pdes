@@ -12,19 +12,20 @@ See the report "report.pdf" for a description of the software, along with the Ju
 
 The bulk of the code belongs in: 
 
-\begin{itemize}
-\item parabolicpde.py - parabolic equation solvers and objects
-\item hyperbolicpde.py - hyperbolic equation solvers and objects
-\item ellipticpde.py - elliptic equation solvers and objects
-\end{itemize}
+parabolicpde.py - parabolic equation solvers and objects
+
+hyperbolicpde.py - hyperbolic equation solvers and objects
+
+ellipticpde.py - elliptic equation solvers and objects
 
 Extra functions can be found in: 
 
-\begin{itemize}
-\item boundary.py - boundary condition objects
-\item visualizations.py - tools for plotting/animating
-\item helpers.py - useful functions that don't live anywhere else
-\end{itemize}
+boundary.py - boundary condition objects
+
+visualizations.py - tools for plotting/animating
+
+helpers.py - useful functions that don't live anywhere else
+
 
 The files worksheets.py and examples.py were used in the process of verifying the solvers and answering
 the worksheet questions. Most of this code ended up in the two notebooks.
