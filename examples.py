@@ -202,16 +202,16 @@ mx = 30
 mt = 500
 scheme = 'CN'
 
-#example1()    
-#example2()
-#example3()
-#example3b()
-#example4()
-#example5()
-#example6()
-#example7()
-#example8()
-#mixedexample()
+example1()    
+example2()
+example3()
+example3b()
+example4()
+example5()
+example6()
+example7()
+example8()
+mixedexample()
 
 ## Wave Equation Problems ##
 
@@ -227,4 +227,4 @@ example13()
 example14()
 
 ## Elliptic Equation Problems ##
-#example15()
+example15()
